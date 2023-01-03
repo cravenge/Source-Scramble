@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 sw=4 tw=99 noet:
+ * vim: set ts=4 :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -8,7 +8,7 @@
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
  * Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
@@ -29,48 +29,52 @@
  * Version: $Id$
  */
 
-#include "extension.h"
+#ifndef _INCLUDE_SOURCEMOD_SRCSCRMBL_PATCHES_H_
+#define _INCLUDE_SOURCEMOD_SRCSCRMBL_PATCHES_H_
 
-Handle_t g_MemoryBlock;
-MemoryBlockHandler g_MemoryBlockHandler;
+#include "smsdk_ext.h"
 
-Handle_t g_MemoryPatch;
-MemoryPatchHandler g_MemoryPatchHandler;
+#ifndef _GLIBCXX_STRING
+#include <string>
+#endif
+#ifndef _GLIBCXX_VECTOR
+#include <vector>
+#endif
 
-SrcScramble g_SrcScramble;
-SMEXT_LINK(&g_SrcScramble);
+#include <sm_stringhashmap.h>
 
-bool SrcScramble::SDK_OnLoad( char* error, size_t maxlength, bool late ) {
-    sharesys->AddNatives(myself, g_SrcScrambleNatives);
-    sharesys->RegisterLibrary(myself, "srcscramble");
+class PatchGameConfig : public ITextListener_SMC {
+public:
+    void ReadSMC_ParseStart();
+    SMCResult ReadSMC_NewSection(const SMCStates *states, const char *name);
+	SMCResult ReadSMC_KeyValue(const SMCStates *states, const char *key, const char *value);
+	SMCResult ReadSMC_LeavingSection(const SMCStates *states);
+private:
+    int m_ParseState;
+    unsigned int m_IgnoreLevel;
+public:
+    struct PatchConf {
+        std::string signatureName;
+        int offset;
+        std::vector<uint8_t> verify;
+        std::vector<uint8_t> preserve;
+        std::vector<uint8_t> replace;
 
-    gameconfs->AddUserConfigHook("Patches", &g_Patches);
+        PatchConf( std::string&& sigName, int ofst, std::vector<uint8_t>&& vrfy, std::vector<uint8_t>&& presv, std::vector<uint8_t>&& repl );
+        
+        PatchConf() {}
+    };
+private:
+    std::string m_Patch;
+    std::string m_PatchSignature;
+    int m_PatchOffset;
+    std::vector<uint8_t> m_PatchVerify;
+    std::vector<uint8_t> m_PatchPreserve;
+    std::vector<uint8_t> m_PatchReplace;
+public:
+    StringHashMap<PatchConf> m_Patches;
+};
 
-    g_MemoryBlock = handlesys->CreateType("MemoryBlock", 
-		&g_MemoryBlockHandler, 
-        0, 
-		nullptr, 
-		nullptr, 
-		myself->GetIdentity(), 
-		nullptr);
+extern PatchGameConfig g_Patches;
 
-    g_MemoryPatch = handlesys->CreateType("MemoryPatch", 
-        &g_MemoryPatchHandler, 
-        0, 
-        nullptr, 
-        nullptr, 
-        myself->GetIdentity(), 
-        nullptr);
-
-    rootconsole->ConsolePrint("[" SMEXT_CONF_LOGTAG "] Loaded successfully!");
-    return true;
-}
-
-void SrcScramble::SDK_OnUnload() {
-    rootconsole->ConsolePrint("[" SMEXT_CONF_LOGTAG "] Unloading...");
-
-    handlesys->RemoveType(g_MemoryPatch, myself->GetIdentity());
-    handlesys->RemoveType(g_MemoryBlock, myself->GetIdentity());
-
-    gameconfs->RemoveUserConfigHook("Patches", &g_Patches);
-}
+#endif // _INCLUDE_SOURCEMOD_SRCSCRMBL_PATCHES_H_

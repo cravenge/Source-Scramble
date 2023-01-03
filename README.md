@@ -3,30 +3,19 @@
 [:coffee: fund my caffeine addiction :coffee:](https://buymeacoff.ee/nosoop)
 
 A SourceMod extension that provides:
-- An easy way for plugins to validate and patch platform-specific address locations with a game
-configuration file.
-- A new handle type for plugins to allocate / free their own memory blocks.
-- Additional memory-related utilities.
-
-The extension comes bundled with `sourcescramble_manager`, a helper plugin that reads gamedata
-file names and patch names from a config file, then loads them all in.  For those simple patches
-that don't need further configuration other than being toggled on.
+- An easy way for plug-ins to validate and patch platform-specific address locations with a game configuration file
+- 2 new handle types for plug-ins to allocate and free their own memory blocks
+- Additional memory-related utilities
 
 ## Installation
 
 This is the installation process for end-users.
 
-1.  Download and unpack the latest release (`package.zip` for Windows, `package.tar.gz` for
-Linux) into your game directory.
-2.  Install `sourcescramble_manager.smx` into your SourceMod installation's `plugins/`
-directory.
+1.  Download the latest package under the Actions tab (`-win-` for Windows, `-nix-` for
+older Linux distributions or `linux` for newer ones)
+2.  Unpack the downloaded archive into your game/server installation's alias (i.e `cstrike` for CS:S and CS:GO) directory
 
-There are two ways patches can be applied:
-
-- managed patches, where `sourcescramble_manager.smx` handles installation / uninstallation in
-a set-and-forget fashion; these are installed by adding a configuration entry in
-`configs/sourcescramble/`
-- unmanaged patches, where another plugin (usually by the patch author) performs the patching
+Patches can only be applied where a plug-in (usually by the patch author) performs the task itself.
 
 It's up to the developer of each patch to provide instructions on how to install them.
 Regardless, all patches do require a game configuration file installed in `gamedata/`.
@@ -34,14 +23,12 @@ Regardless, all patches do require a game configuration file installed in `gamed
 ## Origin
 
 This was originally just dedicated to memory patching.  I had a number of gripes with existing
-solutions like [Memory Patcher][], [No Thriller Taunt][], and one-off plugins for this purpose:
+solutions like [Memory Patcher][], [No Thriller Taunt][], and one-off plug-ins for this purpose:
 
-1.  Plugins either hardcode the solution in the plugin, or use some custom conventions in their
-game config file (solutions I've seen / written myself use either pollute the `Keys` section or
-do their own config parsing with `SMCParser`).
+1.  Plug-ins either hardcode the solution, or use some custom conventions in their game config file (solutions I've seen others use / written myself either pollute the `Keys` section or do their own config parsing with `SMCParser`)
 2.  There is no verification on bytes to be patched (what if a game update modifies the
-function?).
-3.  Reverting the patch would have to be manually implemented.  Some plugins neglect to do this.
+function?)
+3.  Reverting the patch would have to be manually implemented.  Some plug-ins neglect to do this.
 
 Writing it as an extension allows it to:
 
@@ -57,10 +44,10 @@ nice API for developers to work with.
 
 There are a number of things provided with this extension:
 
-- Memory patches, which are a game config-dedicated section that allows a plugin to safely
-overwrite and restore the contents of a memory location.
 - Memory blocks, which provide a Handle type to allocate memory.
-- Address-of natives.
+- Memory patches, which are a game config-dedicated section that allows a plug-in to safely
+overwrite and restore the contents of a memory location.
+- Get*Address natives.
 
 Developing with this extension is intended for power users that are already getting their hands
 dirty with server internals.  Most developers do not need this kind of flexibility.
@@ -119,24 +106,10 @@ copied to the patch.  (New in 0.7.x.)
 
 Any values written on top of an applied patch will be reverted back when the patch is removed.
 
-#### Automatically applying patches
-
-Once you've created a game configuration file that gets stored in `gamedata/`, you can apply it
-in "managed" mode.
-
-Create a new config file in `configs/sourcescramble/`, following the same format as
-`configs/sourcescramble_manager.cfg`.  Key / value pairs should correspond to a gamedata file
-and patch name, respectively.
-
-Reload the plugin using `sm plugins reload sourcescramble_manager` to reload the patches.
-No reload command is built-in, because the plugin intentionally leaks and doesn't keep track of
-handles.  (The extension automatically disables patches when the handle is deleted, which
-happens when the owning plugin is unloaded or reloaded.)
-
-#### Manually applying patches
+#### Applying patches
 
 For more complex cases (e.g., scoped hook memory patches or potentially dynamic patch
-modifications), you'll have to write your own plugin to patch / unpatch the memory as desired.
+modifications), you'll have to write your own plug-in to patch / unpatch the memory as desired.
 
 This should be fairly self-explanatory:
 
@@ -184,7 +157,7 @@ Address pFloatBlock = block.Address;
 delete block;
 ```
 
-### Address-of natives
+### Get*Address natives
 
 New to Source Scramble 0.6.x, this allows a plugin to get the address of one of its own
 variables (`cell_t` or `char[]`).

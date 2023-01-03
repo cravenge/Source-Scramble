@@ -1,8 +1,8 @@
 /**
- * vim: set ts=4 :
+ * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
- * SourceMod Sample Extension
- * Copyright (C) 2004-2008 AlliedModders LLC.  All rights reserved.
+ * SourceMod Source Scramble Extension
+ * Copyright (C) 2019 nosoop.  All rights reserved.
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -32,20 +32,35 @@
 #ifndef _INCLUDE_SOURCEMOD_EXTENSION_PROPER_H_
 #define _INCLUDE_SOURCEMOD_EXTENSION_PROPER_H_
 
-/**
- * @file extension.h
- * @brief Sample extension code header.
- */
-
 #include "smsdk_ext.h"
 
+#include "memoryblock.h"
+#include "memorypatch.h"
 
-/**
- * @brief Sample implementation of the SDK Extension.
- * Note: Uncomment one of the pre-defined virtual functions in order to use it.
- */
-class MemPatchExt : public SDKExtension
-{
+class SrcScramble : public SDKExtension {
+#ifdef SMEXT_CONF_METAMOD
+public:
+	/**
+	 * @brief Called when Metamod is attached, before the extension version is called.
+	 *
+	 * @param error			Error buffer.
+	 * @param maxlen		Maximum size of error buffer.
+	 * @param late			Whether or not Metamod considers this a late load.
+	 * @return				True to succeed, false to fail.
+	 */
+	//virtual bool SDK_OnMetamodLoad( ISmmAPI* ismm, char* error, size_t maxlen, bool late );
+
+	/**
+	 * @brief Called when Metamod's pause state is changing.
+	 * NOTE: By default this is blocked unless sent from SourceMod.
+	 *
+	 * @param paused		Pause state being set.
+	 * @param error			Error buffer.
+	 * @param maxlen		Maximum size of error buffer.
+	 * @return				True to succeed, false to fail.
+	 */
+	//virtual bool SDK_OnMetamodPauseChange( bool paused, char* error, size_t maxlen );
+#endif
 public:
 	/**
 	 * @brief This is called after the initial loading sequence has been processed.
@@ -55,65 +70,66 @@ public:
 	 * @param late		Whether or not the module was loaded after map load.
 	 * @return			True to succeed loading, false to fail.
 	 */
-	virtual bool SDK_OnLoad(char *error, size_t maxlength, bool late);
-	
-	/**
-	 * @brief This is called right before the extension is unloaded.
-	 */
-	virtual void SDK_OnUnload();
+	virtual bool SDK_OnLoad( char* error, size_t maxlength, bool late );
 
 	/**
 	 * @brief This is called once all known extensions have been loaded.
-	 * Note: It is is a good idea to add natives here, if any are provided.
 	 */
 	//virtual void SDK_OnAllLoaded();
 
 	/**
 	 * @brief Called when the pause state is changed.
 	 */
-	//virtual void SDK_OnPauseChange(bool paused);
+	//virtual void SDK_OnPauseChange( bool paused );
+	
+	/**
+	 * @brief This is called once the extension unloading process begins.
+	 */
+	virtual void SDK_OnUnload();
 
 	/**
-	 * @brief this is called when Core wants to know if your extension is working.
-	 *
-	 * @param error		Error message buffer.
-	 * @param maxlength	Size of error message buffer.
-	 * @return			True if working, false otherwise.
+	 * @brief Called after SDK_OnUnload, once all dependencies have been
+	 * removed, and the extension is about to be removed from memory.
 	 */
-	//virtual bool QueryRunning(char *error, size_t maxlength);
+	//virtual void SDK_OnDependenciesDropped();
+#ifdef SMEXT_CONF_METAMOD
 public:
-#if defined SMEXT_CONF_METAMOD
-	/**
-	 * @brief Called when Metamod is attached, before the extension version is called.
-	 *
-	 * @param error			Error buffer.
-	 * @param maxlength		Maximum size of error buffer.
-	 * @param late			Whether or not Metamod considers this a late load.
-	 * @return				True to succeed, false to fail.
-	 */
-	//virtual bool SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlength, bool late);
-
 	/**
 	 * @brief Called when Metamod is detaching, after the extension version is called.
 	 * NOTE: By default this is blocked unless sent from SourceMod.
 	 *
 	 * @param error			Error buffer.
-	 * @param maxlength		Maximum size of error buffer.
+	 * @param maxlen		Maximum size of error buffer.
 	 * @return				True to succeed, false to fail.
 	 */
-	//virtual bool SDK_OnMetamodUnload(char *error, size_t maxlength);
-
-	/**
-	 * @brief Called when Metamod's pause state is changing.
-	 * NOTE: By default this is blocked unless sent from SourceMod.
-	 *
-	 * @param paused		Pause state being set.
-	 * @param error			Error buffer.
-	 * @param maxlength		Maximum size of error buffer.
-	 * @return				True to succeed, false to fail.
-	 */
-	//virtual bool SDK_OnMetamodPauseChange(bool paused, char *error, size_t maxlength);
+	//virtual bool SDK_OnMetamodUnload( char* error, size_t maxlen );
 #endif
 };
+
+class MemoryBlockHandler : public IHandleTypeDispatch {
+public:
+	void OnHandleDestroy(HandleType_t type, void *object)
+	{
+		delete ( MemoryBlock* )object;
+	}
+	bool GetHandleApproxSize(HandleType_t type, void *object, unsigned int *pSize)
+	{
+		*pSize = ( ( MemoryBlock* )object )->size;
+		return true;
+	}
+};
+
+class MemoryPatchHandler : public IHandleTypeDispatch {
+public:
+	void OnHandleDestroy(HandleType_t type, void *object)
+	{
+		delete ( MemoryPatch* )object;
+	}
+};
+
+extern sp_nativeinfo_t g_SrcScrambleNatives[];
+
+extern Handle_t g_MemoryBlock;
+extern Handle_t g_MemoryPatch;
 
 #endif // _INCLUDE_SOURCEMOD_EXTENSION_PROPER_H_
