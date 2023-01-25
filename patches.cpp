@@ -32,14 +32,14 @@
 #include "patches.h"
 #include "util.h"
 
-#define PSTATE_GAMEDEFS_PATCHES		1
-#define PSTATE_GAMEDEFS_PATCHES_PATCH	2
-#define PSTATE_GAMEDEFS_PATCHES_PATCH_READ	3
+#define PSTATE_GAMEDEFS_PATCHES		        1
+#define PSTATE_GAMEDEFS_PATCHES_PATCH	        2
+#define PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE	3
 
 #ifdef PLATFORM_X64
-#define PLATFORM_ARCH_SUFFIX		"64"
+#define PLATFORM_ARCH_SUFFIX		        "64"
 #else
-#define PLATFORM_ARCH_SUFFIX		""
+#define PLATFORM_ARCH_SUFFIX		        ""
 #endif
 
 #if defined PLATFORM_WINDOWS
@@ -63,20 +63,24 @@ void PatchGameConfig::ReadSMC_ParseStart() {
 
 SMCResult PatchGameConfig::ReadSMC_NewSection(const SMCStates *states, const char *name)
 {
-    if( m_IgnoreLevel > 0 ) {
+    if( m_IgnoreLevel ) {
         ++m_IgnoreLevel;
         return SMCResult_Continue;
     }
 
     if( m_ParseState == PSTATE_GAMEDEFS_PATCHES ) {
-        m_Patch.clear();
         m_PatchSignature.clear();
+        m_PatchOffset = 0;
+        m_PatchMatch.clear();
+        m_PatchPreserve.clear();
+        m_PatchReplace.clear();
 
         m_Patch = name;
+
         m_ParseState = PSTATE_GAMEDEFS_PATCHES_PATCH;
     } else if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH ) {
         if( DoesPlatformMatch( name ) ) {
-            m_ParseState = PSTATE_GAMEDEFS_PATCHES_PATCH_READ;
+            m_ParseState = PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE;
             return SMCResult_Continue;
         }
 
@@ -87,13 +91,15 @@ SMCResult PatchGameConfig::ReadSMC_NewSection(const SMCStates *states, const cha
         }
 
         m_IgnoreLevel = 1;
+    } else {
+        ++m_IgnoreLevel;
     }
     return SMCResult_Continue;
 }
 
 SMCResult PatchGameConfig::ReadSMC_KeyValue(const SMCStates *states, const char *key, const char *value)
 {
-    if( ( m_IgnoreLevel > 0 ) || ( ( m_ParseState != PSTATE_GAMEDEFS_PATCHES_PATCH ) && ( m_ParseState != PSTATE_GAMEDEFS_PATCHES_PATCH_READ ) ) ) {
+    if( ( m_IgnoreLevel ) || ( ( m_ParseState != PSTATE_GAMEDEFS_PATCHES_PATCH ) && ( m_ParseState != PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE ) ) ) {
         return SMCResult_Continue;
     }
 
@@ -101,13 +107,13 @@ SMCResult PatchGameConfig::ReadSMC_KeyValue(const SMCStates *states, const char 
         m_PatchReplace = ByteVectorFromString( value );
     } else if( !strcmp( key, "preserve" ) ) {
         m_PatchPreserve = ByteVectorFromString( value );
-    } else if( !strcmp( key, "verify" ) ) {
-        m_PatchVerify = ByteVectorFromString( value );
+    } else if( !strcmp( key, "match" ) ) {
+        m_PatchMatch = ByteVectorFromString( value );
     } else if( !strcmp( key, "offset" ) ) {
         if( value[strlen( value ) - 1] == 'h' ) {
-            m_PatchOffset = static_cast<int>( strtol( value, nullptr, 16 ) );
+            m_PatchOffset = static_cast< int >( strtol( value, nullptr, 16 ) );
         } else {
-            m_PatchOffset = static_cast<int>( strtol( value, nullptr, 0 ) );
+            m_PatchOffset = static_cast< int >( strtol( value, nullptr, 0 ) );
         }
     } else if( !strcmp( key, "signature" ) ) {
         m_PatchSignature = value;
@@ -117,28 +123,28 @@ SMCResult PatchGameConfig::ReadSMC_KeyValue(const SMCStates *states, const char 
 
 SMCResult PatchGameConfig::ReadSMC_LeavingSection(const SMCStates *states)
 {
-    if( m_IgnoreLevel > 0 ) {
+    if( m_IgnoreLevel ) {
         --m_IgnoreLevel;
         return SMCResult_Continue;
     }
 
     if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH ) {
         if( ( !m_Patch.empty() ) && ( !m_PatchSignature.empty() ) ) {
-            PatchConf patConf( std::move( m_PatchSignature ), m_PatchOffset, std::move( m_PatchVerify ), std::move( m_PatchPreserve ), std::move( m_PatchReplace ) );
+            PatchConf patConf( std::move( m_PatchSignature ), m_PatchOffset, std::move( m_PatchMatch ), std::move( m_PatchPreserve ), std::move( m_PatchReplace ) );
             m_Patches.replace(m_Patch.c_str(), patConf);
         }
 
         m_ParseState = PSTATE_GAMEDEFS_PATCHES;
-    } else if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH_READ ) {
+    } else if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE ) {
         m_ParseState = PSTATE_GAMEDEFS_PATCHES_PATCH;
     }
     return SMCResult_Continue;
 }
 
-PatchGameConfig::PatchConf::PatchConf( std::string&& sigName, int ofst, std::vector<uint8_t>&& vrfy, std::vector<uint8_t>&& presv, std::vector<uint8_t>&& repl ) {
+PatchGameConfig::PatchConf::PatchConf( std::string&& sigName, int ofst, std::vector< uint8_t >&& mtch, std::vector< uint8_t >&& presv, std::vector< uint8_t >&& repl ) {
     this->signatureName = std::move( sigName );
     this->offset = ofst;
-    this->verify = std::move( vrfy );
+    this->match = std::move( mtch );
     this->preserve = std::move( presv );
     this->replace = std::move( repl );
 }

@@ -1,14 +1,14 @@
 /**
  * vim: set ts=4 :
  * =============================================================================
- * SourceMod Source Scramble Extension
- * Copyright (C) 2019 nosoop.  All rights reserved.
+ * SourceMod
+ * Copyright (C) 2004-2017 AlliedModders LLC.  All rights reserved.
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
  * Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
@@ -25,24 +25,37 @@
  * this exception to all derivative works.  AlliedModders LLC defines further
  * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
  * or <http://www.sourcemod.net/license.php>.
- *
- * Version: $Id$
  */
 
-#ifndef _INCLUDE_SOURCEMOD_SRCSCRMBL_MEMBLOCK_H_
-#define _INCLUDE_SOURCEMOD_SRCSCRMBL_MEMBLOCK_H_
+#ifndef _INCLUDE_SOURCEMOD_PSEUDOADDRESSMANAGER_H_
+#define _INCLUDE_SOURCEMOD_PSEUDOADDRESSMANAGER_H_
 
-#ifndef _STDLIB_H_
-#include <stdlib.h>
+#if defined PLATFORM_WINDOWS
+#ifndef _STDINT_H
+# include <stdint.h>
+#endif
+#elif defined PLATFORM_LINUX
+#ifndef _INTTYPES_H
+# include <inttypes.h>
+#endif
 #endif
 
-class MemoryBlock {
-public:
-    size_t size;
-    void* pBlock;
+class PseudoAddressManager {
+    static constexpr uint8_t PSEUDO_OFFSET_BITS = 26;
+    static constexpr uint8_t PSEUDO_INDEX_BITS = sizeof( uint32_t ) * 8 - PSEUDO_OFFSET_BITS;
 
-    MemoryBlock( size_t size );
-    ~MemoryBlock();
+    void* m_AllocBases[1 << PSEUDO_INDEX_BITS];
+    uint8_t m_NumEntries;
+public:
+    PseudoAddressManager();
+
+    void* FromPseudoAddress( uint32_t paddr );
+private:
+    void* GetAllocationBase( void* ptr );
+public:
+    uint32_t ToPseudoAddress( void* addr );
 };
 
-#endif // _INCLUDE_SOURCEMOD_SRCSCRMBL_MEMBLOCK_H_
+extern PseudoAddressManager pseudoAddr;
+
+#endif // _INCLUDE_SOURCEMOD_PSEUDOADDRESSMANAGER_H_

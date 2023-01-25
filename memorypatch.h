@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 sw=4 tw=99 noet :
+ * vim: set ts=4 :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -32,107 +32,23 @@
 #ifndef _INCLUDE_SOURCEMOD_SRCSCRMBL_MEMPATCH_H_
 #define _INCLUDE_SOURCEMOD_SRCSCRMBL_MEMPATCH_H_
 
-#include <sourcehook.h>
-#include <sh_memory.h>
-
 #include "patches.h"
 
-struct MemoryPatch {
-    MemoryPatch( uintptr_t addr, const PatchGameConfig::PatchConf& info ) {
-        this->pAddr = addr;
+class MemoryPatch {
+public:
+    void* pAddr;
+private:
+    std::vector< uint8_t > match;
+    std::vector< uint8_t > preserve;
+    std::vector< uint8_t > replace;
+    std::vector< uint8_t > original;
+public:
+    MemoryPatch( void* addr, const PatchGameConfig::PatchConf& info );
+    ~MemoryPatch();
 
-        for( auto vrfy : info.verify ) {
-            this->verify.push_back( vrfy );
-        }
-
-        for( auto presv : info.preserve ) {
-            this->preserve.push_back( presv );
-        }
-
-        for( auto repl : info.replace ) {
-            this->replace.push_back( repl );
-        }
-    }
-
-    ~MemoryPatch() {
-        if( this->original.size() ) {
-            size_t i = 0;
-            while( i < this->original.size() ) {
-                *( ( uint8_t* )this->pAddr + i ) = this->original[i];
-
-                i++;
-            }
-
-            this->original.clear();
-        }
-    }
-
-    bool Validate() {
-        size_t i = 0;
-        
-        auto addr = ( uint8_t* )this->pAddr;
-        while( i < this->verify.size() ) {
-            if( this->verify[i] != '*' && this->verify[i] != addr[i] ) {
-                return false;
-            }
-
-            i++;
-        }
-
-        return true;
-    }
-
-    bool Enable() {
-        if( this->original.size() ) {
-            return false;
-        }
-        
-        size_t i = 0;
-        while( i < this->replace.size() ) {
-            this->original.push_back( *( ( uint8_t* )this->pAddr + i ) );
-
-            i++;
-        }
-
-        SourceHook::SetMemAccess(( void* )this->pAddr, this->replace.size() * sizeof( uint8_t ), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
-
-        i = 0;
-
-        uint8_t presvBits;
-        while( i < this->replace.size() ) {
-            presvBits = 0;
-            if( this->preserve.size() > i )
-                presvBits = this->preserve[i];
-            
-            *( ( uint8_t* )this->pAddr + i ) = ( this->replace[i] & ~presvBits ) | ( this->original[i] & presvBits );
-
-            i++;
-        }
-
-        return true;
-    }
-
-    bool Disable() {
-        if( !this->original.size() ) {
-            return false;
-        }
-        
-        size_t i = 0;
-        while( i < this->original.size() ) {
-            *( ( uint8_t* )this->pAddr + i ) = this->original[i];
-
-            i++;
-        }
-        
-        this->original.clear();
-        return true;
-    }
-
-    uintptr_t pAddr;
-    std::vector<uint8_t> verify;
-    std::vector<uint8_t> preserve;
-    std::vector<uint8_t> replace;
-    std::vector<uint8_t> original;
+    bool Validate();
+    bool Enable();
+    bool Disable();
 };
 
 #endif // _INCLUDE_SOURCEMOD_SRCSCRMBL_MEMPATCH_H_

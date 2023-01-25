@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 sw=4 tw=99 noet:
+ * vim: set ts=4 :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -47,12 +47,12 @@ bool SrcScramble::SDK_OnLoad( char* error, size_t maxlength, bool late ) {
     gameconfs->AddUserConfigHook("Patches", &g_Patches);
 
     g_MemoryBlock = handlesys->CreateType("MemoryBlock", 
-		&g_MemoryBlockHandler, 
+        &g_MemoryBlockHandler, 
         0, 
-		nullptr, 
-		nullptr, 
-		myself->GetIdentity(), 
-		nullptr);
+        nullptr, 
+        nullptr, 
+        myself->GetIdentity(), 
+        nullptr);
 
     g_MemoryPatch = handlesys->CreateType("MemoryPatch", 
         &g_MemoryPatchHandler, 
@@ -73,4 +73,20 @@ void SrcScramble::SDK_OnUnload() {
     handlesys->RemoveType(g_MemoryBlock, myself->GetIdentity());
 
     gameconfs->RemoveUserConfigHook("Patches", &g_Patches);
+}
+
+void MemoryBlockHandler::OnHandleDestroy(HandleType_t type, void *object)
+{
+    delete static_cast< MemoryBlock* >( object );
+}
+
+bool MemoryBlockHandler::GetHandleApproxSize(HandleType_t type, void *object, unsigned int *pSize)
+{
+    *pSize = static_cast< unsigned int >( ( static_cast< MemoryBlock* >( object ) )->size );
+    return true;
+}
+
+void MemoryPatchHandler::OnHandleDestroy(HandleType_t type, void *object)
+{
+    delete static_cast< MemoryPatch* >( object );
 }

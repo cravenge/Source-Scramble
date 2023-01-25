@@ -33,22 +33,22 @@
 
 #ifndef _include_amtl_string_h_
 #include <am-string.h>
-#endif
 
+#endif
 #ifdef SMEXT_CONF_METAMOD
 #ifndef META_NO_HL2SDK
 IServerGameDLL* gamedll;
 IVEngineServer* engine;
-#endif
 
+#endif
 ISmmAPI* g_SMAPI;
 ISmmPlugin* g_PLAPI;
 
 SourceHook::ISourceHook* g_SHPtr;
 
 PluginId g_PLID;
-#endif
 
+#endif
 IExtension* myself;
 
 IShareSys* g_pShareSys;
@@ -60,13 +60,13 @@ ISourceMod* smutils;
 #ifdef SMEXT_ENABLE_FORWARDSYS
 IForwardManager* g_pForwards;
 IForwardManager* forwards;
-#endif
 
+#endif
 #ifdef SMEXT_ENABLE_HANDLESYS
 IHandleSys* g_pHandleSys;
 IHandleSys* handlesys;
-#endif
 
+#endif
 #ifdef SMEXT_ENABLE_PLAYERHELPERS
 IPlayerManager *playerhelpers;
 #endif
@@ -97,11 +97,11 @@ IMenuManager* menus;
 #ifdef SMEXT_ENABLE_ADTFACTORY
 IADTFactory* adtfactory;
 #endif
-
 #ifdef SMEXT_ENABLE_PLUGINSYS
-SourceMod::IPluginManager* plsys;
-#endif
 
+SourceMod::IPluginManager* plsys;
+
+#endif
 #ifdef SMEXT_ENABLE_ADMINSYS
 IAdminSystem* adminsys;
 #endif
@@ -122,46 +122,46 @@ IRootConsole* rootconsole;
 SMM_API void* PL_EXPOSURE(const char *pName, int *pReturnCode)
 {
 #ifdef METAMOD_PLAPI_VERSION
-	if( pName != nullptr && !strcmp( pName, METAMOD_PLAPI_NAME ) )
+    if( pName != nullptr && !strcmp( pName, METAMOD_PLAPI_NAME ) )
 #else
-	if( pName != nullptr && !strcmp( pName, PLAPI_NAME ) )
+    if( pName != nullptr && !strcmp( pName, PLAPI_NAME ) )
 #endif
-	{
-		if( pReturnCode )
-			*pReturnCode = META_IFACE_OK;
-		return static_cast<void*>( g_pExtensionIface );
-	}
+    {
+        if( pReturnCode )
+            *pReturnCode = META_IFACE_OK;
+        return static_cast< void* >( g_pExtensionIface );
+    }
 
-	if( pReturnCode )
-		*pReturnCode = META_IFACE_FAILED;
-	return nullptr;
+    if( pReturnCode )
+        *pReturnCode = META_IFACE_FAILED;
+    return nullptr;
 }
-#endif
 
+#endif
 PLATFORM_EXTERN_C IExtensionInterface* GetSMExtAPI() {
 	return g_pExtensionIface;
 }
 
 SDKExtension::SDKExtension() {
 #ifdef SMEXT_CONF_METAMOD
-	m_SourceMMLoaded = false;
-	m_WeAreUnloaded = false;
-	m_WeGotPauseChange = false;
+    m_SourceMMLoaded = false;
+    m_WeAreUnloaded = false;
+    m_WeGotPauseChange = false;
 #endif
 }
 
 #ifdef SMEXT_CONF_METAMOD
 bool SDKExtension::SDK_OnMetamodLoad( ISmmAPI* ismm, char* error, size_t maxlen, bool late ) {
-	return true;
+    return true;
 }
 
 bool SDKExtension::SDK_OnMetamodPauseChange( bool paused, char* error, size_t maxlen ) {
-	return true;
+    return true;
 }
-#endif
 
+#endif
 bool SDKExtension::SDK_OnLoad( char* error, size_t maxlength, bool late ) {
-	return true;
+    return true;
 }
 
 void SDKExtension::SDK_OnAllLoaded() {}
@@ -171,276 +171,278 @@ void SDKExtension::SDK_OnDependenciesDropped() {}
 
 #ifdef SMEXT_CONF_METAMOD
 bool SDKExtension::SDK_OnMetamodUnload( char* error, size_t maxlen ) {
-	return true;
+    return true;
 }
 
 bool SDKExtension::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool late)
 {
-	PLUGIN_SAVEVARS();
+    PLUGIN_SAVEVARS();
 
 #ifndef META_NO_HL2SDK
 #ifndef METAMOD_PLAPI_VERSION
-	GET_V_IFACE_ANY(serverFactory, gamedll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
-	GET_V_IFACE_CURRENT(engineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
+    GET_V_IFACE_ANY(serverFactory, gamedll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
+    GET_V_IFACE_CURRENT(engineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
+
 #else
-	GET_V_IFACE_ANY(GetServerFactory, gamedll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
+    GET_V_IFACE_ANY(GetServerFactory, gamedll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
 #if SOURCE_ENGINE == SE_SDK2013
 
-	engine = ( IVEngineServer* )ismm->GetEngineFactory()("VEngineServer023", nullptr);
-	if( engine == nullptr ) {
-		engine = ( IVEngineServer* )ismm->GetEngineFactory()("VEngineServer022", nullptr);
-		if( engine == nullptr ) {
-			engine = ( IVEngineServer* )ismm->GetEngineFactory()("VEngineServer021", nullptr);
-			if( engine == nullptr ) {
-				if( error != nullptr && maxlen )
-					ismm->Format(error, maxlen, "Could not find interface: VEngineServer023 or VEngineServer022");
-				return false;
-			}
-		}
-	}
-#else
-	GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
-#endif
-#endif
-#endif
+    engine = ( IVEngineServer* )ismm->GetEngineFactory()( "VEngineServer023", nullptr );
+    if( engine == nullptr ) {
+        engine = ( IVEngineServer* )ismm->GetEngineFactory()( "VEngineServer022", nullptr );
+        if( engine == nullptr ) {
+            engine = ( IVEngineServer* )ismm->GetEngineFactory()( "VEngineServer021", nullptr );
+            if( engine == nullptr ) {
+                if( error != nullptr && maxlen )
+                    ismm->Format(error, maxlen, "Could not get IVEngineServer interface");
+                return false;
+            }
+        }
+    }
 
-	m_SourceMMLoaded = true;
-	return SDK_OnMetamodLoad( ismm, error, maxlen, late );
+#else
+    GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
+
+#endif
+#endif
+#endif
+    m_SourceMMLoaded = true;
+    return SDK_OnMetamodLoad( ismm, error, maxlen, late );
 }
 
 bool SDKExtension::Unload(char *error, size_t maxlen)
 {
-	if( !m_WeAreUnloaded ) {
-		if( error != nullptr )
-			ke::SafeStrcpy( error, maxlen, "This extension must be unloaded by SourceMod." );
-		return false;
-	}
+    if( !m_WeAreUnloaded ) {
+        if( error != nullptr )
+            ke::SafeStrcpy(error, maxlen, "This extension must be unloaded by SourceMod.");
+        return false;
+    }
 
-	return SDK_OnMetamodUnload( error, maxlen );
+    return SDK_OnMetamodUnload( error, maxlen );
 }
 
 bool SDKExtension::Pause(char *error, size_t maxlen)
 {
-	if( !m_WeGotPauseChange ) {
-		if( error != nullptr )
-			ke::SafeStrcpy(error, maxlen, "This extension must be paused by SourceMod.");
-		return false;
-	}
+    if( !m_WeGotPauseChange ) {
+        if( error != nullptr )
+            ke::SafeStrcpy(error, maxlen, "This extension must be paused by SourceMod.");
+        return false;
+    }
 
-	m_WeGotPauseChange = false;
-	return SDK_OnMetamodPauseChange( true, error, maxlen );
+    m_WeGotPauseChange = false;
+    return SDK_OnMetamodPauseChange( true, error, maxlen );
 }
 
 bool SDKExtension::Unpause(char *error, size_t maxlen)
 {
-	if( !m_WeGotPauseChange ) {
-		if( error != nullptr )
-			ke::SafeStrcpy(error, maxlen, "This extension must be unpaused by SourceMod.");
-		return false;
-	}
+    if( !m_WeGotPauseChange ) {
+        if( error != nullptr )
+            ke::SafeStrcpy(error, maxlen, "This extension must be unpaused by SourceMod.");
+        return false;
+    }
 
-	m_WeGotPauseChange = false;
-	return SDK_OnMetamodPauseChange( false, error, maxlen );
+    m_WeGotPauseChange = false;
+    return SDK_OnMetamodPauseChange( false, error, maxlen );
 }
 
 const char *SDKExtension::GetAuthor() {
-	return GetExtensionAuthor();
+    return GetExtensionAuthor();
 }
 
 const char *SDKExtension::GetName() {
-	return GetExtensionName();
+    return GetExtensionName();
 }
 
 const char *SDKExtension::GetDescription() {
-	return GetExtensionDescription();
+    return GetExtensionDescription();
 }
 
 const char *SDKExtension::GetURL() {
-	return GetExtensionURL();
+    return GetExtensionURL();
 }
 
 const char *SDKExtension::GetLicense() {
-	return SMEXT_CONF_LICENSE;
+    return SMEXT_CONF_LICENSE;
 }
 
 const char *SDKExtension::GetVersion() {
-	return GetExtensionVerString();
+    return GetExtensionVerString();
 }
 
 const char *SDKExtension::GetDate() {
-	return GetExtensionDateString();
+    return GetExtensionDateString();
 }
 
 const char *SDKExtension::GetLogTag() {
-	return GetExtensionTag();
+    return GetExtensionTag();
 }
-#endif
 
+#endif
 bool SDKExtension::OnExtensionLoad(IExtension *me, IShareSys *sys, char *error, size_t maxlength, bool late)
 {
-	myself = me;
+    myself = me;
 
-	g_pShareSys = sharesys = sys;
+    g_pShareSys = sharesys = sys;
 
 #ifdef SMEXT_CONF_METAMOD
-	m_WeAreUnloaded = true;
+    m_WeAreUnloaded = true;
 
-	if( !m_SourceMMLoaded ) {
-		if( error )
-			ke::SafeStrcpy(error, maxlength, "Metamod attach failed");
-		return false;
-	}
+    if( !m_SourceMMLoaded ) {
+        if( error )
+            ke::SafeStrcpy(error, maxlength, "Metamod attach failed");
+        return false;
+    }
+
 #endif
-
-	SM_GET_IFACE(SOURCEMOD, g_pSM);
-	smutils = g_pSM;
+    SM_GET_IFACE(SOURCEMOD, g_pSM);
+    smutils = g_pSM;
 
 #ifdef SMEXT_ENABLE_HANDLESYS
-	SM_GET_IFACE(HANDLESYSTEM, g_pHandleSys);
-	handlesys = g_pHandleSys;
-#endif
+    SM_GET_IFACE(HANDLESYSTEM, g_pHandleSys);
+    handlesys = g_pHandleSys;
 
+#endif
 #ifdef SMEXT_ENABLE_FORWARDSYS
-	SM_GET_IFACE(FORWARDMANAGER, g_pForwards);
-	forwards = g_pForwards;
-#endif
+    SM_GET_IFACE(FORWARDMANAGER, g_pForwards);
+    forwards = g_pForwards;
 
+#endif
 #ifdef SMEXT_ENABLE_PLAYERHELPERS
-	SM_GET_IFACE(PLAYERMANAGER, playerhelpers);
+    SM_GET_IFACE(PLAYERMANAGER, playerhelpers);
 #endif
 #ifdef SMEXT_ENABLE_DBMANAGER
-	SM_GET_IFACE(DBI, dbi);
+    SM_GET_IFACE(DBI, dbi);
 #endif
 #ifdef SMEXT_ENABLE_GAMECONF
-	SM_GET_IFACE(GAMECONFIG, gameconfs);
+    SM_GET_IFACE(GAMECONFIG, gameconfs);
 #endif
 #ifdef SMEXT_ENABLE_MEMUTILS
-	SM_GET_IFACE(MEMORYUTILS, memutils);
+    SM_GET_IFACE(MEMORYUTILS, memutils);
 #endif
 #ifdef SMEXT_ENABLE_GAMEHELPERS
-	SM_GET_IFACE(GAMEHELPERS, gamehelpers);
+    SM_GET_IFACE(GAMEHELPERS, gamehelpers);
 #endif
 #ifdef SMEXT_ENABLE_TIMERSYS
-	SM_GET_IFACE(TIMERSYS, timersys);
+    SM_GET_IFACE(TIMERSYS, timersys);
 #endif
 #ifdef SMEXT_ENABLE_THREADER
-	SM_GET_IFACE(THREADER, threader);
+    SM_GET_IFACE(THREADER, threader);
 #endif
 #ifdef SMEXT_ENABLE_LIBSYS
-	SM_GET_IFACE(LIBRARYSYS, libsys);
+    SM_GET_IFACE(LIBRARYSYS, libsys);
 #endif
 #ifdef SMEXT_ENABLE_MENUS
-	SM_GET_IFACE(MENUMANAGER, menus);
+    SM_GET_IFACE(MENUMANAGER, menus);
 #endif
 #ifdef SMEXT_ENABLE_ADTFACTORY
-	SM_GET_IFACE(ADTFACTORY, adtfactory);
+    SM_GET_IFACE(ADTFACTORY, adtfactory);
 #endif
 #ifdef SMEXT_ENABLE_PLUGINSYS
-	SM_GET_IFACE(PLUGINSYSTEM, plsys);
+    SM_GET_IFACE(PLUGINSYSTEM, plsys);
 #endif
 #ifdef SMEXT_ENABLE_ADMINSYS
-	SM_GET_IFACE(ADMINSYS, adminsys);
+    SM_GET_IFACE(ADMINSYS, adminsys);
 #endif
 #ifdef SMEXT_ENABLE_TEXTPARSERS
-	SM_GET_IFACE(TEXTPARSERS, textparsers);
+    SM_GET_IFACE(TEXTPARSERS, textparsers);
 #endif
 #ifdef SMEXT_ENABLE_USERMSGS
-	SM_GET_IFACE(USERMSGS, usermsgs);
+    SM_GET_IFACE(USERMSGS, usermsgs);
 #endif
 #ifdef SMEXT_ENABLE_TRANSLATOR
-	SM_GET_IFACE(TRANSLATOR, translator);
+    SM_GET_IFACE(TRANSLATOR, translator);
 #endif
 #ifdef SMEXT_ENABLE_ROOTCONSOLEMENU
-	SM_GET_IFACE(ROOTCONSOLE, rootconsole);
+    SM_GET_IFACE(ROOTCONSOLE, rootconsole);
 #endif
 
-	if( SDK_OnLoad( error, maxlength, late ) ) {
+    if( SDK_OnLoad( error, maxlength, late ) ) {
 #ifdef SMEXT_CONF_METAMOD
-		m_WeAreUnloaded = false;
+        m_WeAreUnloaded = false;
 #endif
-		return true;
-	}
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 void SDKExtension::OnExtensionUnload() {
 #ifdef SMEXT_CONF_METAMOD
-	m_WeAreUnloaded = true;
+    m_WeAreUnloaded = true;
 
 #endif
-	SDK_OnUnload();
+    SDK_OnUnload();
 }
 
 void SDKExtension::OnExtensionsAllLoaded() {
-	SDK_OnAllLoaded();
+    SDK_OnAllLoaded();
 }
 
 void SDKExtension::OnExtensionPauseChange(bool state)
 {
 #ifdef SMEXT_CONF_METAMOD
-	m_WeGotPauseChange = true;
+    m_WeGotPauseChange = true;
 
 #endif
-	SDK_OnPauseChange( state );
+    SDK_OnPauseChange( state );
 }
 
 bool SDKExtension::IsMetamodExtension() {
 #ifdef SMEXT_CONF_METAMOD
-	return true;
+    return true;
 #else
-	return false;
+    return false;
 #endif
 }
 
 const char *SDKExtension::GetExtensionName() {
-	return SMEXT_CONF_NAME;
+    return SMEXT_CONF_NAME;
 }
 
 const char *SDKExtension::GetExtensionURL() {
-	return SMEXT_CONF_URL;
+    return SMEXT_CONF_URL;
 }
 
 const char *SDKExtension::GetExtensionTag() {
-	return SMEXT_CONF_LOGTAG;
+    return SMEXT_CONF_LOGTAG;
 }
 
 const char *SDKExtension::GetExtensionAuthor() {
-	return SMEXT_CONF_AUTHOR;
+    return SMEXT_CONF_AUTHOR;
 }
 
 const char *SDKExtension::GetExtensionVerString() {
-	return SMEXT_CONF_VERSION;
+    return SMEXT_CONF_VERSION;
 }
 
 const char *SDKExtension::GetExtensionDescription() {
-	return SMEXT_CONF_DESCRIPTION;
+    return SMEXT_CONF_DESCRIPTION;
 }
 
 const char *SDKExtension::GetExtensionDateString() {
-	return SMEXT_CONF_DATESTRING;
+    return SMEXT_CONF_DATESTRING;
 }
 
 void SDKExtension::OnDependenciesDropped() {
-	SDK_OnDependenciesDropped();
+    SDK_OnDependenciesDropped();
+}
+#if defined PLATFORM_LINUX || defined PLATFORM_APPLE
+
+extern "C" void __cxa_pure_virtual( void ) {}
+
+void* operator new( size_t size ) {
+    return malloc( size );
 }
 
-#if defined __linux__ || defined __APPLE__
-extern "C" void __cxa_pure_virtual(void) {}
-
-void *operator new( size_t size ) {
-	return malloc( size );
-}
-
-void *operator new[]( size_t size ) {
-	return malloc( size );
+void* operator new[]( size_t size ) {
+    return malloc( size );
 }
 
 void operator delete( void* ptr ) {
-	free( ptr );
+    free( ptr );
 }
 
 void operator delete[]( void* ptr ) {
-	free( ptr );
+    free( ptr );
 }
 #endif

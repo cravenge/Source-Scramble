@@ -61,27 +61,27 @@ Memory patches allow developers to declare a byte payload to be written to memor
 Since patches generally operate on machine code, you'll need to be familiar with that to write
 patches.
 
-A new `MemPatches` section is added at the same level of `Addresses`, `Offsets`, and
+A new `Patches` section is added at the same level of `Addresses`, `Offsets`, and
 `Signatures` in the game configuration file.  An example of a section is below:
 
 ```
-"MemPatches"
+"Patches"
 {
 	// this patch makes buildings solid to TFBots by forcing certain code paths
 	"CTraceFilterObject::ShouldHitEntity()::TFBotCollideWithBuildings"
 	{
-		"signature" "CTraceFilterObject::ShouldHitEntity()"
+		"signature" 	"CTraceFilterObject::ShouldHitEntity()"
 		"linux"
 		{
 			"offset"	"1A6h"
-			"verify"	"\x75"
-			"patch"		"\x70"
+			"match"		"\x75"
+			"replace"	"\x70"
 		}
 		"windows"
 		{
 			"offset"	"9Ah"
-			"verify"	"\x74"
-			"patch"		"\x71"
+			"match"		"\x74"
+			"replace"	"\x71"
 		}
 	}
 }
@@ -90,14 +90,12 @@ A new `MemPatches` section is added at the same level of `Addresses`, `Offsets`,
 A few things are present:
 
 - A subsection.  The name of the section will be the name used when getting a `MemoryPatch`
-handle with `MemoryPatch.CreateFromConf()`.
+handle with `MemoryPatch.FromConf()`.
 - A function `signature` name referencing the name of a signature in a `Signatures` section
 somewhere else in the game config file.
 - The `offset` to patch.  Hexadecimal notation is supported with the `h` suffix, for easy
 referencing in IDA or similar.
-- `patch` (required) and `verify` (optional) Hex strings (`\x01\x02\x03` or `01 02 03` formats
-supported) indicating the byte payload and a signature to match against at the previously
-mentioned offset.
+- `replace` (required) and `match` (optional) Hex strings (`\x01\x02\x03`) indicating the byte payload and a signature to match against at the previously mentioned offset.
 	- `verify` signatures can use `\x2A` to indicate wildcards, same as SourceMod.
 - An optional `preserve` hex string indicating which bits from the original location should be
 copied to the patch.  (New in 0.7.x.)
@@ -114,10 +112,10 @@ modifications), you'll have to write your own plug-in to patch / unpatch the mem
 This should be fairly self-explanatory:
 
 ```sourcepawn
-// Handle hGameConf = LoadGameConfigFile(...);
+// GameData hGameConf = new GameData(...);
 
 // as mentioned, patches are cleaned up when the handle is deleted
-MemoryPatch patch = MemoryPatch.CreateFromConf(hGameConf, "CTraceFilterObject::ShouldHitEntity()::TFBotCollideWithBuildings");
+MemoryPatch patch = MemoryPatch.FromConf(hGameConf, "CTraceFilterObject::ShouldHitEntity()::TFBotCollideWithBuildings");
 
 if (!patch.Validate()) {
 	ThrowError("Failed to verify patch.");
@@ -146,10 +144,10 @@ It's also a useful way of allocating structures for things like `SDKCall`s.
 Basic use of the API:
 
 ```sourcepawn
-// allocate and zero-initializes 4 bytes of memory
+// allocates and zero-initializes 4 bytes of memory
 MemoryBlock block = new MemoryBlock(4);
 
-block.StoreToOffset(0, view_as<int>(0.75), NumberType_Int32);
+block.Set(0, view_as<int>(0.75), NumberType_Int32);
 
 Address pFloatBlock = block.Address;
 
@@ -159,17 +157,17 @@ delete block;
 
 ### Get*Address natives
 
-New to Source Scramble 0.6.x, this allows a plugin to get the address of one of its own
+New to Source Scramble 0.6.x, this allows a plug-in to get the address of one of its own
 variables (`cell_t` or `char[]`).
 
 This replaces certain use cases of memory blocks; you can now point to an existing variable in
-the plugin's memory space in cases when you need to read a float value or more granular control
+the plug-in's memory space in cases when you need to read a float value or more granular control
 in things like DHooks to send a fixed buffer.
 
 ```sourcepawn
 float g_flValue;
 
-Address pFloatLocation = GetAddressOfCell(g_flValue);
+Address pFloatLocation = GetCellAddress(g_flValue);
 // patch an indirect load or whatever with the address of that float value
 
 g_flValue = 0.75; // changes are reflected instantly wherever this memory location is referenced

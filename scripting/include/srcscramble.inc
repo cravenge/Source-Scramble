@@ -34,7 +34,6 @@
 
 #define _srcscramble_included
 
-#if SOURCEMOD_V_MINOR >= 7
 methodmap MemoryBlock < Handle
 {
 	// Creates a static global block
@@ -62,7 +61,7 @@ methodmap MemoryBlock < Handle
 	// @param size          How many bytes should be read
 	//                      If retrieving a floating-point value, use NumberType_Int32
 	// @return              Value(s) read
-	// @error               index + size > this.Size
+	// @error               index + GetNumberTypeByteCount(size) > this.Size
 	public int Get(int index, NumberType size) {
 		if( index < 0 || index + GetNumberTypeByteCount(size) > this.Size ) {
 			ThrowError("Invalid index %d (count: %d)", index, this.Size);
@@ -77,7 +76,7 @@ methodmap MemoryBlock < Handle
 	// @param value         Value to set
 	// @param size          How many bytes should be written
 	//                      If setting a floating-point value, use NumberType_Int32
-	// @error               index + size > this.Size
+	// @error               index + GetNumberTypeByteCount(size) > this.Size
 	public void Set(int index, any data, NumberType size) {
 		if( index < 0 || index + GetNumberTypeByteCount(size) > this.Size ) {
 			ThrowError("Invalid index %d (count: %d)", index, this.Size);
@@ -95,11 +94,7 @@ methodmap MemoryPatch < Handle
 	// @param gameconf      GameConfig Handle
 	// @param name          Name of the property to find
 	// @return              A handle to the memory patch or null on failure
-#if SOURCEMOD_V_MINOR >= 10
-	public static native MemoryPatch FromConf(GameData gameconf, const char[] name);
-#else
 	public static native MemoryPatch FromConf(Handle gameconf, const char[] name);
-#endif
 
 	// Validates a patch
 	//
@@ -107,6 +102,9 @@ methodmap MemoryPatch < Handle
 	public native bool Validate();
 
 	// Enables a patch
+	//
+	// Note: Use Validate() first if the information from FromConf()
+	//       has a "match" key specified
 	//
 	// @return              True on success, false otherwise
 	public native bool Enable();
@@ -121,7 +119,6 @@ methodmap MemoryPatch < Handle
 		public native get();
 	}
 }
-#endif
 
 /**
  * Creates a static global block
@@ -132,11 +129,7 @@ methodmap MemoryPatch < Handle
  * @param size              The number of entries the block can hold
  * @return                  A handle to the memory block or null on failure
  */
-#if SOURCEMOD_V_MINOR >= 7
 native MemoryBlock CreateMemoryBlock(int size);
-#else
-native Handle CreateMemoryBlock(int size);
-#endif
 
 /**
  * Get current size of the allocated memory block
@@ -164,13 +157,10 @@ native Address GetBlockAddress(Handle block);
  * @param size              How many bytes should be read
  *                          If retrieving a floating-point value, use NumberType_Int32
  * @return                  Value(s) read
- * @error                   Invalid Handle or index + size > GetBlockSize()
+ * @error                   Invalid Handle or index + GetNumberTypeByteCount(size) > GetBlockSize()
  */
 stock int GetBlockEntry(Handle block, int index, NumberType size)
 {
-#if SOURCEMOD_V_MINOR >= 7
-	return block.Get(index, size);
-#else
 	int blocksize = GetBlockSize(block);
 	if (index < 0 || index + GetNumberTypeByteCount(size) > blocksize)
 	{
@@ -178,7 +168,6 @@ stock int GetBlockEntry(Handle block, int index, NumberType size)
 	}
 	
 	return LoadFromAddress(GetBlockAddress(block) + view_as<Address>(index), size);
-#endif
 }
 
 /**
@@ -188,13 +177,10 @@ stock int GetBlockEntry(Handle block, int index, NumberType size)
  * @param index             Index in the block
  * @param size              How many bytes should be written
  *                          If setting a floating-point value, use NumberType_Int32
- * @error                   Invalid Handle or index + size > GetBlockSize()
+ * @error                   Invalid Handle or index + GetNumberTypeByteCount(size) > GetBlockSize()
  */
 stock void SetBlockEntry(Handle block, int index, any data, NumberType size)
 {
-#if SOURCEMOD_V_MINOR >= 7
-	block.Set(index, data, size);
-#else
 	int blocksize = GetBlockSize(block);
 	if (index < 0 || index + GetNumberTypeByteCount(size) > blocksize)
 	{
@@ -202,7 +188,6 @@ stock void SetBlockEntry(Handle block, int index, any data, NumberType size)
 	}
 	
 	StoreToAddress(GetBlockAddress(block) + view_as<Address>(index), data, size);
-#endif
 }
 
 /**
@@ -234,13 +219,7 @@ stock static int GetNumberTypeByteCount(NumberType size)
  * @return                  A handle to the memory patch or null on failure
  * @error                   Invalid Handle or property name
  */
-#if SOURCEMOD_V_MINOR >= 10
-native MemoryPatch MemoryPatch_FromConf(GameData gameconf, const char[] name);
-#elif SOURCEMOD_V_MINOR >= 7
 native MemoryPatch MemoryPatch_FromConf(Handle gameconf, const char[] name);
-#else
-native Handle MemoryPatch_FromConf(Handle gameconf, const char[] name);
-#endif
 
 /**
  * Validates a patch
@@ -253,6 +232,9 @@ native bool ValidatePatch(Handle patch);
 
 /**
  * Enables a patch
+ *
+ * Note: Use ValidatePatch() first if the information from MemoryPatch_FromConf()
+ *       has a "match" key specified
  *
  * @param patch             Patch Handle
  * @return                  True on success, false otherwise
@@ -284,7 +266,7 @@ native Address GetPatchAddress(Handle patch);
  * @param cell              Cell reference to calculate
  *
  * @return                  An address calculated
- * @error                   Calculation returned other integer than SP_ERROR_NONE
+ * @error                   Calculation returned something else other than SP_ERROR_NONE
  */
 native Address GetCellAddress(any &cell);
 
@@ -294,7 +276,7 @@ native Address GetCellAddress(any &cell);
  * @param str               String to calculate
  *
  * @return                  An address calculated
- * @error                   Calculation returned other integer than SP_ERROR_NONE
+ * @error                   Calculation returned something else other than SP_ERROR_NONE
  */
 native Address GetStringAddress(char[] str);
 
