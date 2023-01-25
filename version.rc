@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION  0,8,0,0
- PRODUCTVERSION 0,8,0,0
+ FILEVERSION  0,9,0,0
+ PRODUCTVERSION 0,9,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -45,12 +45,12 @@ BEGIN
         BEGIN
             VALUE "Comments", "Source Scramble Extension"
             VALUE "FileDescription", "SourceMod Source Scramble Extension"
-            VALUE "FileVersion", "0.8.0.0"
+            VALUE "FileVersion", "0.9.0.0"
             VALUE "InternalName", "SourceMod Source Scramble Extension"
             VALUE "LegalCopyright", "Copyright (c) 2019, nosoop"
             VALUE "OriginalFilename", BINARY_NAME
             VALUE "ProductName", "SourceMod Source Scramble Extension"
-            VALUE "ProductVersion", "0.8.0.0"
+            VALUE "ProductVersion", "0.9.0.0"
         END
     END
     BLOCK "VarFileInfo"

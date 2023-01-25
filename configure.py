@@ -1,5 +1,6 @@
 # vim: set ts=2 sw=2 tw=99 noet:
 import sys
+
 try:
   from ambuild2 import run, util
 except:

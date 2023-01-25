@@ -31,6 +31,14 @@
 
 #include "extension.h"
 
+#ifdef PLATFORM_X64
+#ifdef PLATFORM_LINUX
+# define _INTTYPES_H	1
+#endif
+
+#include "PseudoAddrManager.h"
+#endif
+
 cell_t CreateSourceMemoryBlock(IPluginContext* pContext, const cell_t* params)
 {
     cell_t size = params[1];
@@ -48,16 +56,16 @@ cell_t CreateSourceMemoryBlock(IPluginContext* pContext, const cell_t* params)
         return BAD_HANDLE;
     }
 
-    return handlesys->CreateHandle(g_MemoryBlock, 
+    return static_cast< cell_t >( handlesys->CreateHandle(g_MemoryBlock, 
             pMemoryBlock, 
             pContext->GetIdentity(), 
             myself->GetIdentity(), 
-            nullptr);
+            nullptr) );
 }
 
 cell_t GetMemoryBlockSize(IPluginContext* pContext, const cell_t* params)
 {
-    Handle_t hndl = static_cast<Handle_t>( params[1] );
+    Handle_t hndl = static_cast< Handle_t >( params[1] );
 
     HandleError err;
     HandleSecurity sec;
@@ -72,12 +80,12 @@ cell_t GetMemoryBlockSize(IPluginContext* pContext, const cell_t* params)
         return pContext->ThrowNativeError("Invalid MemoryBlock handle %x (error %d)", hndl, err);
     }
 
-    return ( cell_t )pMemoryBlock->size;
+    return static_cast< cell_t >( pMemoryBlock->size );
 }
 
 cell_t GetMemoryBlockAddress(IPluginContext* pContext, const cell_t* params)
 {
-    Handle_t hndl = static_cast<Handle_t>( params[1] );
+    Handle_t hndl = static_cast< Handle_t >( params[1] );
 
     HandleError err;
     HandleSecurity sec;
@@ -92,12 +100,16 @@ cell_t GetMemoryBlockAddress(IPluginContext* pContext, const cell_t* params)
         return pContext->ThrowNativeError("Invalid MemoryBlock handle %x (error %d)", hndl, err);
     }
 
-    return ( uintptr_t )pMemoryBlock->pBlock;
+#ifdef PLATFORM_X64
+    return static_cast< cell_t >( pseudoAddr.ToPseudoAddress( pMemoryBlock->pBlock ) );
+#else
+    return static_cast< cell_t >( reinterpret_cast< uintptr_t >( pMemoryBlock->pBlock ) );
+#endif
 }
 
 cell_t SourceMemoryPatch_FromConf(IPluginContext* pContext, const cell_t* params)
 {
-    Handle_t hndl = static_cast<Handle_t>( params[1] );
+    Handle_t hndl = static_cast< Handle_t >( params[1] );
 
     HandleError err;
 
@@ -109,38 +121,33 @@ cell_t SourceMemoryPatch_FromConf(IPluginContext* pContext, const cell_t* params
     char* key;
     pContext->LocalToString(params[2], &key);
 
-    StringHashMap<PatchGameConfig::PatchConf>::Result r = g_Patches.m_Patches.find(key);
+    StringHashMap< PatchGameConfig::PatchConf >::Result r = g_Patches.m_Patches.find(key);
     if( !r.found() ) {
         return pContext->ThrowNativeError("Cannot find patch name \"%s\"", key);
     }
 
     const PatchGameConfig::PatchConf& patConf = r->value;
-    if( !patConf.signatureName.length() ) {
-        return pContext->ThrowNativeError("\"%s\" has an empty signature key value", key);
-    }
 
     void* addr;
     if( !gc->GetMemSig(patConf.signatureName.c_str(), &addr) || addr == nullptr ) {
         return pContext->ThrowNativeError("Cannot find \"%s\" signature from \"%s\"", patConf.signatureName.c_str(), key);
     }
 
-    addr = reinterpret_cast<void*>( reinterpret_cast<uint8_t*>( addr ) + patConf.offset );
-
-    MemoryPatch* pMemoryPatch = new MemoryPatch( ( uintptr_t )addr, patConf );
+    MemoryPatch* pMemoryPatch = new MemoryPatch( addr, patConf );
     if( pMemoryPatch == nullptr ) {
         return BAD_HANDLE;
     }
 
-    return handlesys->CreateHandle(g_MemoryPatch,
+    return static_cast< cell_t >( handlesys->CreateHandle(g_MemoryPatch,
             pMemoryPatch, 
             pContext->GetIdentity(), 
             myself->GetIdentity(),
-            nullptr);
+            nullptr) );
 }
 
 cell_t ValidateMemoryPatch(IPluginContext* pContext, const cell_t* params)
 {
-    Handle_t hndl = static_cast<Handle_t>( params[1] );
+    Handle_t hndl = static_cast< Handle_t >( params[1] );
 
     HandleError err;
     HandleSecurity sec;
@@ -160,7 +167,7 @@ cell_t ValidateMemoryPatch(IPluginContext* pContext, const cell_t* params)
 
 cell_t EnableMemoryPatch(IPluginContext* pContext, const cell_t* params)
 {
-    Handle_t hndl = static_cast<Handle_t>( params[1] );
+    Handle_t hndl = static_cast< Handle_t >( params[1] );
 
     HandleError err;
     HandleSecurity sec;
@@ -173,6 +180,8 @@ cell_t EnableMemoryPatch(IPluginContext* pContext, const cell_t* params)
     if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, ( void** )&pMemoryPatch) )
           != HandleError_None ) {
         return pContext->ThrowNativeError("Invalid MemoryPatch handle %x (error %d)", hndl, err);
+    } else if( reinterpret_cast< uintptr_t >( pMemoryPatch->pAddr ) < 0x10000 ) {
+        return pContext->ThrowNativeError("Invalid address 0x%x is pointing to reserved memory", pMemoryPatch->pAddr);
     }
 
     return pMemoryPatch->Enable();
@@ -180,7 +189,7 @@ cell_t EnableMemoryPatch(IPluginContext* pContext, const cell_t* params)
 
 cell_t DisableMemoryPatch(IPluginContext* pContext, const cell_t* params)
 {
-    Handle_t hndl = static_cast<Handle_t>( params[1] );
+    Handle_t hndl = static_cast< Handle_t >( params[1] );
 
     HandleError err;
     HandleSecurity sec;
@@ -200,7 +209,7 @@ cell_t DisableMemoryPatch(IPluginContext* pContext, const cell_t* params)
 
 cell_t GetMemoryPatchAddress(IPluginContext* pContext, const cell_t* params)
 {
-    Handle_t hndl = static_cast<Handle_t>( params[1] );
+    Handle_t hndl = static_cast< Handle_t >( params[1] );
 
     HandleError err;
     HandleSecurity sec;
@@ -215,7 +224,11 @@ cell_t GetMemoryPatchAddress(IPluginContext* pContext, const cell_t* params)
         return pContext->ThrowNativeError("Invalid MemoryPatch handle %x (error %d)", hndl, err);
     }
 
-    return pMemoryPatch->pAddr;
+#ifdef PLATFORM_X64
+    return static_cast< cell_t >( pseudoAddr.ToPseudoAddress( pMemoryPatch->pAddr ) );
+#else
+    return static_cast< cell_t >( reinterpret_cast< uintptr_t >( pMemoryPatch->pAddr ) );
+#endif
 }
 
 cell_t GetCellAddress(IPluginContext* pContext, const cell_t* params)
@@ -225,7 +238,11 @@ cell_t GetCellAddress(IPluginContext* pContext, const cell_t* params)
         return pContext->ThrowNativeError("Error encountered while converting cell reference to a physical address");
     }
 
-    return reinterpret_cast<intptr_t>( value );
+#ifdef PLATFORM_X64
+    return static_cast< cell_t >( pseudoAddr.ToPseudoAddress( value ) );
+#else
+    return static_cast< cell_t >( reinterpret_cast< intptr_t >( value ) );
+#endif
 }
 
 cell_t GetStringAddress(IPluginContext* pContext, const cell_t* params)
@@ -235,7 +252,11 @@ cell_t GetStringAddress(IPluginContext* pContext, const cell_t* params)
         return pContext->ThrowNativeError("Error encountered while converting string reference to a physical address");
     }
 
-    return reinterpret_cast<intptr_t>( buffer );
+#ifdef PLATFORM_X64
+    return static_cast< cell_t >( pseudoAddr.ToPseudoAddress( buffer ) );
+#else
+    return static_cast< cell_t >( reinterpret_cast< intptr_t >( buffer ) );
+#endif
 }
 
 sp_nativeinfo_t g_SrcScrambleNatives[] = {
@@ -260,5 +281,5 @@ sp_nativeinfo_t g_SrcScrambleNatives[] = {
     { "MemoryPatch.Disable",         DisableMemoryPatch },
     { "MemoryPatch.Address.get",     GetMemoryPatchAddress },
 
-    { nullptr, nullptr },
+    { nullptr,                       nullptr },
 };

@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 sw=4 tw=99 noet:
+ * vim: set ts=4 :
  * =============================================================================
  * SourceMod Base Extension Code
  * Copyright (C) 2004-2008 AlliedModders LLC.  All rights reserved.
@@ -49,8 +49,8 @@
 #include <ISourceMod.h>
 #include <IExtensionSys.h>
 #if defined SMEXT_ENABLE_FORWARDSYS            \
-	&& !defined SMEXT_ENABLE_TIMERSYS            \
-	&& !defined SMEXT_ENABLE_USERMSGS
+    && !defined SMEXT_ENABLE_TIMERSYS            \
+    && !defined SMEXT_ENABLE_USERMSGS
 #include <IForwardSys.h>
 #endif
 #ifdef SMEXT_ENABLE_PLAYERHELPERS
@@ -81,15 +81,15 @@
 #include <IADTFactory.h>
 #endif
 #if defined SMEXT_ENABLE_PLUGINSYS            \
-	&& !defined SMEXT_ENABLE_FORWARDSYS
+    && !defined SMEXT_ENABLE_FORWARDSYS
 #include <IPluginSys.h>
 #endif
 #if defined SMEXT_ENABLE_ADMINSYS            \
-	&& !defined SMEXT_ENABLE_PLAYERHELPERS
+    && !defined SMEXT_ENABLE_PLAYERHELPERS
 #include <IAdminSystem.h>
 #endif
 #if defined SMEXT_ENABLE_TEXTPARSERS            \
-	&& !defined SMEXT_ENABLE_GAMECONF
+    && !defined SMEXT_ENABLE_GAMECONF
 #include <ITextParsers.h>
 #endif
 #ifdef SMEXT_ENABLE_USERMSGS
@@ -108,7 +108,7 @@
 #define SM_CHECK_IFACE(prefix, addr) \
 	if( addr == nullptr ) { \
 		if( error != nullptr && maxlength ) { \
-			size_t len = ke::SafeSprintf(error, maxlength, "Could not find interface: %s", SMINTERFACE_##prefix##_NAME); \
+			size_t len = ke::SafeSprintf(error, maxlength, "Could not get %s interface", SMINTERFACE_##prefix##_NAME); \
 			if( len >= maxlength ) { \
 				error[maxlength - 1] = '\0'; \
 			} \
@@ -125,9 +125,14 @@ class SDKExtension :
 #endif
 	public IExtensionInterface
 {
+#ifdef SMEXT_CONF_METAMOD
+	bool m_SourceMMLoaded;
+	bool m_WeAreUnloaded;
+	bool m_WeGotPauseChange;
+#endif
 public:
 	SDKExtension();
-public:
+
 #ifdef SMEXT_CONF_METAMOD
 	/**
 	 * @brief Called when Metamod is attached, before the extension version is called.
@@ -267,12 +272,6 @@ public:
 
 	/** Called after OnExtensionUnload, once dependencies have been dropped. */
 	virtual void OnDependenciesDropped();
-#ifdef SMEXT_CONF_METAMOD
-private:
-	bool m_SourceMMLoaded;
-	bool m_WeAreUnloaded;
-	bool m_WeGotPauseChange;
-#endif
 };
 
 #ifdef SMEXT_CONF_METAMOD
@@ -294,7 +293,7 @@ extern IShareSys* sharesys;				/* Note: Newer name */
 #define SM_GET_IFACE(prefix, addr) \
 	if( !sharesys->RequestInterface(SM_MKIFACE(prefix), myself, ( SMInterface** )&addr) ) { \
 		if( error != nullptr && maxlength ) { \
-			size_t len = ke::SafeSprintf(error, maxlength, "Could not find interface: %s", SMINTERFACE_##prefix##_NAME); \
+			size_t len = ke::SafeSprintf(error, maxlength, "Could not get %s interface", SMINTERFACE_##prefix##_NAME); \
 			if( len >= maxlength ) { \
 				error[maxlength - 1] = '\0'; \
 			} \
@@ -349,7 +348,9 @@ extern IMenuManager* menus;
 extern IADTFactory* adtfactory;
 #endif
 #ifdef SMEXT_ENABLE_PLUGINSYS
+
 extern SourceMod::IPluginManager* plsys;
+
 #endif
 #ifdef SMEXT_ENABLE_ADMINSYS
 extern IAdminSystem* adminsys;

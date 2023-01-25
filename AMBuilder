@@ -3,16 +3,25 @@ import os
 
 for cxx in builder.targets:
   binary = SrcScramble.ExtLibrary(builder, cxx, 'srcscramble.ext')
+  if binary.compiler.behavior == 'gcc' and binary.compiler.target.arch == 'x86':
+    binary.compiler.cflags += ['-fPIC']
+
   binary.compiler.includes += [
     os.path.join(SrcScramble.mms_root, 'core', 'sourcehook'),
+    os.path.join(builder.sourcePath, 'core', 'logic'),
   ]
-  
+
   binary.sources += [
     'extension.cpp',
     'natives.cpp',
+    'memoryblock.cpp',
+    'memorypatch.cpp',
     'patches.cpp',
     'util.cpp',
     'smsdk_ext.cpp',
   ]
+
+  if binary.compiler.target.arch == 'x86_64':
+    binary.sources += ['core/logic/PseudoAddrManager.cpp']
 
   SrcScramble.extensions += [builder.Add(binary)]

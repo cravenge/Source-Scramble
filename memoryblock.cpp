@@ -29,50 +29,12 @@
  * Version: $Id$
  */
 
-#ifndef _INCLUDE_SOURCEMOD_SRCSCRMBL_PATCHES_H_
-#define _INCLUDE_SOURCEMOD_SRCSCRMBL_PATCHES_H_
+#include "memoryblock.h"
 
-#include "smsdk_ext.h"
-#ifndef _GLIBCXX_STRING
+MemoryBlock::MemoryBlock( size_t size ) : size( size ) {
+    this->pBlock = calloc( size, 1 );
+}
 
-#include <string>
-#endif
-#ifndef _GLIBCXX_VECTOR
-#include <vector>
-#endif
-
-#include <sm_stringhashmap.h>
-
-class PatchGameConfig : public ITextListener_SMC {
-    int m_ParseState;
-    unsigned int m_IgnoreLevel;
-
-    std::string m_Patch;
-    std::string m_PatchSignature;
-    int m_PatchOffset;
-    std::vector< uint8_t > m_PatchMatch;
-    std::vector< uint8_t > m_PatchPreserve;
-    std::vector< uint8_t > m_PatchReplace;
-public:
-    void ReadSMC_ParseStart();
-    SMCResult ReadSMC_NewSection(const SMCStates *states, const char *name);
-    SMCResult ReadSMC_KeyValue(const SMCStates *states, const char *key, const char *value);
-    SMCResult ReadSMC_LeavingSection(const SMCStates *states);
-
-    struct PatchConf {
-        PatchConf() {}
-        PatchConf( std::string&& sigName, int ofst, std::vector< uint8_t >&& mtch, std::vector< uint8_t >&& presv, std::vector< uint8_t >&& repl );
-
-        std::string signatureName;
-        int offset;
-        std::vector< uint8_t > match;
-        std::vector< uint8_t > preserve;
-        std::vector< uint8_t > replace;
-    };
-
-    StringHashMap< PatchConf > m_Patches;
-};
-
-extern PatchGameConfig g_Patches;
-
-#endif // _INCLUDE_SOURCEMOD_SRCSCRMBL_PATCHES_H_
+MemoryBlock::~MemoryBlock() {
+    free( this->pBlock );
+}

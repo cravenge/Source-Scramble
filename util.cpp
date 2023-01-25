@@ -34,19 +34,20 @@
 #include "stdlib.h"
 #include "string.h"
 
-std::vector<uint8_t> ByteVectorFromString( const char* str ) {
-    std::vector<uint8_t> payload;
+std::vector< uint8_t > ByteVectorFromString( const char* str ) {
+    std::vector< uint8_t > payload;
 
     char* tmp = strdup( str );
-
     char* tokStr = strtok( tmp, "\\x " );
+
+    uint8_t byte;
     while( tokStr ) {
-        uint8_t byte = ( uint8_t )strtol( tokStr, nullptr, 16 );
-        payload.push_back( byte );
+        byte = static_cast< uint8_t >( strtol( tokStr, nullptr, 16 ) );
+        payload.emplace_back( byte );
 
         tokStr = strtok( nullptr, "\\x " );
     }
-    
+
     free( tmp );
     return payload;
 }

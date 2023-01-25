@@ -35,11 +35,11 @@
 #ifndef _STDINT_H
 #include "stdint.h"
 #endif
-
 #ifndef _GLIBCXX_VECTOR
+
 #include <vector>
 #endif
 
-std::vector<uint8_t> ByteVectorFromString( const char* str );
+std::vector< uint8_t > ByteVectorFromString( const char* str );
 
 #endif // _INCLUDE_SOURCEMOD_SRCSCRMBL_UTIL_H_

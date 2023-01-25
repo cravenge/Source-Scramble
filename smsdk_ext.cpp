@@ -33,22 +33,22 @@
 
 #ifndef _include_amtl_string_h_
 #include <am-string.h>
-#endif
 
+#endif
 #ifdef SMEXT_CONF_METAMOD
 #ifndef META_NO_HL2SDK
 IServerGameDLL* gamedll;
 IVEngineServer* engine;
-#endif
 
+#endif
 ISmmAPI* g_SMAPI;
 ISmmPlugin* g_PLAPI;
 
 SourceHook::ISourceHook* g_SHPtr;
 
 PluginId g_PLID;
-#endif
 
+#endif
 IExtension* myself;
 
 IShareSys* g_pShareSys;
@@ -60,13 +60,13 @@ ISourceMod* smutils;
 #ifdef SMEXT_ENABLE_FORWARDSYS
 IForwardManager* g_pForwards;
 IForwardManager* forwards;
-#endif
 
+#endif
 #ifdef SMEXT_ENABLE_HANDLESYS
 IHandleSys* g_pHandleSys;
 IHandleSys* handlesys;
-#endif
 
+#endif
 #ifdef SMEXT_ENABLE_PLAYERHELPERS
 IPlayerManager *playerhelpers;
 #endif
@@ -97,11 +97,11 @@ IMenuManager* menus;
 #ifdef SMEXT_ENABLE_ADTFACTORY
 IADTFactory* adtfactory;
 #endif
-
 #ifdef SMEXT_ENABLE_PLUGINSYS
-SourceMod::IPluginManager* plsys;
-#endif
 
+SourceMod::IPluginManager* plsys;
+
+#endif
 #ifdef SMEXT_ENABLE_ADMINSYS
 IAdminSystem* adminsys;
 #endif
@@ -129,15 +129,15 @@ SMM_API void* PL_EXPOSURE(const char *pName, int *pReturnCode)
 	{
 		if( pReturnCode )
 			*pReturnCode = META_IFACE_OK;
-		return static_cast<void*>( g_pExtensionIface );
+		return static_cast< void* >( g_pExtensionIface );
 	}
 
 	if( pReturnCode )
 		*pReturnCode = META_IFACE_FAILED;
 	return nullptr;
 }
-#endif
 
+#endif
 PLATFORM_EXTERN_C IExtensionInterface* GetSMExtAPI() {
 	return g_pExtensionIface;
 }
@@ -158,8 +158,8 @@ bool SDKExtension::SDK_OnMetamodLoad( ISmmAPI* ismm, char* error, size_t maxlen,
 bool SDKExtension::SDK_OnMetamodPauseChange( bool paused, char* error, size_t maxlen ) {
 	return true;
 }
-#endif
 
+#endif
 bool SDKExtension::SDK_OnLoad( char* error, size_t maxlength, bool late ) {
 	return true;
 }
@@ -182,28 +182,30 @@ bool SDKExtension::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, 
 #ifndef METAMOD_PLAPI_VERSION
 	GET_V_IFACE_ANY(serverFactory, gamedll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
 	GET_V_IFACE_CURRENT(engineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
+
 #else
 	GET_V_IFACE_ANY(GetServerFactory, gamedll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
 #if SOURCE_ENGINE == SE_SDK2013
 
-	engine = ( IVEngineServer* )ismm->GetEngineFactory()("VEngineServer023", nullptr);
+	engine = ( IVEngineServer* )ismm->GetEngineFactory()( "VEngineServer023", nullptr );
 	if( engine == nullptr ) {
-		engine = ( IVEngineServer* )ismm->GetEngineFactory()("VEngineServer022", nullptr);
+		engine = ( IVEngineServer* )ismm->GetEngineFactory()( "VEngineServer022", nullptr );
 		if( engine == nullptr ) {
-			engine = ( IVEngineServer* )ismm->GetEngineFactory()("VEngineServer021", nullptr);
+			engine = ( IVEngineServer* )ismm->GetEngineFactory()( "VEngineServer021", nullptr );
 			if( engine == nullptr ) {
 				if( error != nullptr && maxlen )
-					ismm->Format(error, maxlen, "Could not find interface: VEngineServer023 or VEngineServer022");
+					ismm->Format(error, maxlen, "Could not get IVEngineServer interface");
 				return false;
 			}
 		}
 	}
+
 #else
 	GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
-#endif
-#endif
-#endif
 
+#endif
+#endif
+#endif
 	m_SourceMMLoaded = true;
 	return SDK_OnMetamodLoad( ismm, error, maxlen, late );
 }
@@ -212,7 +214,7 @@ bool SDKExtension::Unload(char *error, size_t maxlen)
 {
 	if( !m_WeAreUnloaded ) {
 		if( error != nullptr )
-			ke::SafeStrcpy( error, maxlen, "This extension must be unloaded by SourceMod." );
+			ke::SafeStrcpy(error, maxlen, "This extension must be unloaded by SourceMod.");
 		return false;
 	}
 
@@ -274,8 +276,8 @@ const char *SDKExtension::GetDate() {
 const char *SDKExtension::GetLogTag() {
 	return GetExtensionTag();
 }
-#endif
 
+#endif
 bool SDKExtension::OnExtensionLoad(IExtension *me, IShareSys *sys, char *error, size_t maxlength, bool late)
 {
 	myself = me;
@@ -290,21 +292,21 @@ bool SDKExtension::OnExtensionLoad(IExtension *me, IShareSys *sys, char *error, 
 			ke::SafeStrcpy(error, maxlength, "Metamod attach failed");
 		return false;
 	}
-#endif
 
+#endif
 	SM_GET_IFACE(SOURCEMOD, g_pSM);
 	smutils = g_pSM;
 
 #ifdef SMEXT_ENABLE_HANDLESYS
 	SM_GET_IFACE(HANDLESYSTEM, g_pHandleSys);
 	handlesys = g_pHandleSys;
-#endif
 
+#endif
 #ifdef SMEXT_ENABLE_FORWARDSYS
 	SM_GET_IFACE(FORWARDMANAGER, g_pForwards);
 	forwards = g_pForwards;
-#endif
 
+#endif
 #ifdef SMEXT_ENABLE_PLAYERHELPERS
 	SM_GET_IFACE(PLAYERMANAGER, playerhelpers);
 #endif
@@ -424,15 +426,15 @@ const char *SDKExtension::GetExtensionDateString() {
 void SDKExtension::OnDependenciesDropped() {
 	SDK_OnDependenciesDropped();
 }
+#if defined PLATFORM_LINUX || defined PLATFORM_APPLE
 
-#if defined __linux__ || defined __APPLE__
-extern "C" void __cxa_pure_virtual(void) {}
+extern "C" void __cxa_pure_virtual( void ) {}
 
-void *operator new( size_t size ) {
+void* operator new( size_t size ) {
 	return malloc( size );
 }
 
-void *operator new[]( size_t size ) {
+void* operator new[]( size_t size ) {
 	return malloc( size );
 }
 

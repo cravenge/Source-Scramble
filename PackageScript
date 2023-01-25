@@ -30,6 +30,11 @@ CopyFiles('scripting/include', 'addons/sourcemod/scripting/include',
   [ 'srcscramble.inc', ]
 )
 
+if 'x86_64' in SrcScramble.target_archs:
+  CopyFiles('extensions', 'addons/sourcemod/extensions/x64',
+    [ 'srcscramble.autoload', ]
+  )
+
 CopyFiles('extensions', 'addons/sourcemod/extensions',
   [ 'srcscramble.autoload', ]
 )

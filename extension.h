@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 sw=4 tw=99 noet :
+ * vim: set ts=4 :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -38,8 +38,8 @@
 #include "memorypatch.h"
 
 class SrcScramble : public SDKExtension {
-#ifdef SMEXT_CONF_METAMOD
 public:
+#ifdef SMEXT_CONF_METAMOD
 	/**
 	 * @brief Called when Metamod is attached, before the extension version is called.
 	 *
@@ -60,8 +60,8 @@ public:
 	 * @return				True to succeed, false to fail.
 	 */
 	//virtual bool SDK_OnMetamodPauseChange( bool paused, char* error, size_t maxlen );
+
 #endif
-public:
 	/**
 	 * @brief This is called after the initial loading sequence has been processed.
 	 *
@@ -93,7 +93,7 @@ public:
 	 */
 	//virtual void SDK_OnDependenciesDropped();
 #ifdef SMEXT_CONF_METAMOD
-public:
+
 	/**
 	 * @brief Called when Metamod is detaching, after the extension version is called.
 	 * NOTE: By default this is blocked unless sent from SourceMod.
@@ -108,28 +108,18 @@ public:
 
 class MemoryBlockHandler : public IHandleTypeDispatch {
 public:
-	void OnHandleDestroy(HandleType_t type, void *object)
-	{
-		delete ( MemoryBlock* )object;
-	}
-	bool GetHandleApproxSize(HandleType_t type, void *object, unsigned int *pSize)
-	{
-		*pSize = ( ( MemoryBlock* )object )->size;
-		return true;
-	}
+	void OnHandleDestroy(HandleType_t type, void *object);
+	bool GetHandleApproxSize(HandleType_t type, void *object, unsigned int *pSize);
 };
 
 class MemoryPatchHandler : public IHandleTypeDispatch {
 public:
-	void OnHandleDestroy(HandleType_t type, void *object)
-	{
-		delete ( MemoryPatch* )object;
-	}
+	void OnHandleDestroy(HandleType_t type, void *object);
 };
-
-extern sp_nativeinfo_t g_SrcScrambleNatives[];
 
 extern Handle_t g_MemoryBlock;
 extern Handle_t g_MemoryPatch;
+
+extern sp_nativeinfo_t g_SrcScrambleNatives[];
 
 #endif // _INCLUDE_SOURCEMOD_EXTENSION_PROPER_H_
