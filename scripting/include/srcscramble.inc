@@ -118,6 +118,11 @@ methodmap MemoryPatch < Handle
 	property Address Address {
 		public native get();
 	}
+
+	// Get the current size of the memory patch
+	property int Size {
+		public native get();
+	}
 }
 
 /**
@@ -138,7 +143,7 @@ native MemoryBlock CreateMemoryBlock(int size);
  * @return                  The size of the block
  * @error					Invalid Handle
  */
-native int GetBlockSize(Handle block);
+native int GetMemoryBlockSize(Handle block);
 
 /**
  * Get current address of the allocated memory block
@@ -147,7 +152,7 @@ native int GetBlockSize(Handle block);
  * @return                  The address of the block
  * @error					Invalid Handle
  */
-native Address GetBlockAddress(Handle block);
+native Address GetMemoryBlockAddress(Handle block);
 
 /**
  * Retrieve up to 4 bytes from a block
@@ -228,19 +233,19 @@ native MemoryPatch MemoryPatch_FromConf(Handle gameconf, const char[] name);
  * @return                  True if check passes, false if not
  * @error                   Invalid Handle
  */
-native bool ValidatePatch(Handle patch);
+native bool ValidateMemoryPatch(Handle patch);
 
 /**
  * Enables a patch
  *
- * Note: Use ValidatePatch() first if the information from MemoryPatch_FromConf()
+ * Note: Use ValidateMemoryPatch() first if the information from MemoryPatch_FromConf()
  *       has a "match" key specified
  *
  * @param patch             Patch Handle
  * @return                  True on success, false otherwise
  * @error                   Invalid Handle
  */
-native bool EnablePatch(Handle patch);
+native bool EnableMemoryPatch(Handle patch);
 
 /**
  * Disables a patch
@@ -249,7 +254,7 @@ native bool EnablePatch(Handle patch);
  * @return                  True on success, false otherwise
  * @error                   Invalid Handle
  */
-native bool DisablePatch(Handle patch);
+native bool DisableMemoryPatch(Handle patch);
 
 /**
  * Get current address of the memory patch
@@ -258,7 +263,15 @@ native bool DisablePatch(Handle patch);
  * @return                  The address of the patch
  * @error                   Invalid Handle
  */
-native Address GetPatchAddress(Handle patch);
+native Address GetMemoryPatchAddress(Handle patch);
+
+/**
+ * Get current size of the memory patch
+ *
+ * @param patch             Patch Handle
+ *
+ *
+native int GetMemoryPatchSize(Handle patch);
 
 /**
  * Returns an address calculated from a cell reference
@@ -300,13 +313,14 @@ public Extension __ext_srcscrmbl =
 public void __ext_srcscrmbl_SetNTVOptional()
 {
 	MarkNativeAsOptional("CreateMemoryBlock");
-	MarkNativeAsOptional("GetBlockSize");
-	MarkNativeAsOptional("GetBlockAddress");
+	MarkNativeAsOptional("GetMemoryBlockSize");
+	MarkNativeAsOptional("GetMemoryBlockAddress");
 	MarkNativeAsOptional("MemoryPatch_FromConf");
-	MarkNativeAsOptional("ValidatePatch");
-	MarkNativeAsOptional("EnablePatch");
-	MarkNativeAsOptional("DisablePatch");
-	MarkNativeAsOptional("GetPatchAddress");
+	MarkNativeAsOptional("ValidateMemoryPatch");
+	MarkNativeAsOptional("EnableMemoryPatch");
+	MarkNativeAsOptional("DisableMemoryPatch");
+	MarkNativeAsOptional("GetMemoryPatchAddress");
+	MarkNativeAsOptional("GetMemoryPatchSize");
 	
 	MarkNativeAsOptional("GetCellAddress");
 	MarkNativeAsOptional("GetStringAddress");
@@ -319,5 +333,6 @@ public void __ext_srcscrmbl_SetNTVOptional()
 	MarkNativeAsOptional("MemoryPatch.Enable");
 	MarkNativeAsOptional("MemoryPatch.Disable");
 	MarkNativeAsOptional("MemoryPatch.Address.get");
+	MarkNativeAsOptional("MemoryPatch.Size.get");
 }
 #endif

@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 :
+ * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod
  * Copyright (C) 2004-2017 AlliedModders LLC.  All rights reserved.
@@ -33,13 +33,14 @@
 #if defined PLATFORM_WINDOWS
 #ifndef _STDINT_H
 # include <stdint.h>
+
 #endif
 #elif defined PLATFORM_LINUX
 #ifndef _INTTYPES_H
 # include <inttypes.h>
-#endif
-#endif
 
+#endif
+#endif
 class PseudoAddressManager {
     static constexpr uint8_t PSEUDO_OFFSET_BITS = 26;
     static constexpr uint8_t PSEUDO_INDEX_BITS = sizeof( uint32_t ) * 8 - PSEUDO_OFFSET_BITS;

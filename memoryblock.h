@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 :
+ * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -34,8 +34,8 @@
 
 #ifndef _STDLIB_H_
 #include <stdlib.h>
-#endif
 
+#endif
 class MemoryBlock {
 public:
     size_t size;

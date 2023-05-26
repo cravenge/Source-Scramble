@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 :
+ * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod
  * Copyright (C) 2004-2017 AlliedModders LLC.  All rights reserved.
@@ -34,11 +34,12 @@
 #if defined PLATFORM_LINUX
 #include <stddef.h>
 #include <stdio.h>
+
 #elif defined PLATFORM_APPLE
 #include <mach/mach.h>
 #include <mach/vm_region.h>
-#endif
 
+#endif
 PseudoAddressManager pseudoAddr;
 
 PseudoAddressManager::PseudoAddressManager() : m_NumEntries( 0 ) {}

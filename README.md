@@ -1,6 +1,6 @@
 # Source Scramble
 
-[:coffee: fund my caffeine addiction :coffee:](https://buymeacoff.ee/nosoop)
+[:coffee: Fund nosoop's caffeine addiction :coffee:](https://buymeacoff.ee/nosoop)
 
 A SourceMod extension that provides:
 - An easy way for plug-ins to validate and patch platform-specific address locations with a game configuration file
@@ -22,20 +22,20 @@ Regardless, all patches do require a game configuration file installed in `gamed
 
 ## Origin
 
-This was originally just dedicated to memory patching.  I had a number of gripes with existing
+This was originally just dedicated to memory patching. nosoop had a number of gripes with existing
 solutions like [Memory Patcher][], [No Thriller Taunt][], and one-off plug-ins for this purpose:
 
-1.  Plug-ins either hardcode the solution, or use some custom conventions in their game config file (solutions I've seen others use / written myself either pollute the `Keys` section or do their own config parsing with `SMCParser`)
-2.  There is no verification on bytes to be patched (what if a game update modifies the
+1.  Plug-ins either hardcode the solution, or use some custom conventions in their game config file. (Solutions they has seen others use / written myself either pollute the `Keys` section or do their own config parsing with `SMCParser`)
+2.  There is no verification on bytes to be patched. (What if a game update modifies the
 function?)
-3.  Reverting the patch would have to be manually implemented.  Some plug-ins neglect to do this.
+3.  Reverting the patch would have to be manually implemented. Some plug-ins neglect to do this
 
 Writing it as an extension allows it to:
 
-1.  Leverage SourceMod's game configuration parsing logic.  No need to reparse the file, and
-this provides a uniform convention for patches.
+1.  Leverage SourceMod's game configuration parsing logic. No need to reparse the file, and
+this provides a uniform convention for patches
 2.  Use the SourceMod handle system; this allows for managed cleanup and provides a relatively
-nice API for developers to work with.
+nice API for developers to work with
 
 [Memory Patcher]: https://forums.alliedmods.net/showthread.php?p=2617543
 [No Thriller Taunt]: https://forums.alliedmods.net/showthread.php?t=171343
@@ -44,13 +44,13 @@ nice API for developers to work with.
 
 There are a number of things provided with this extension:
 
-- Memory blocks, which provide a Handle type to allocate memory.
+- Memory blocks, which provide a Handle type to allocate memory
 - Memory patches, which are a game config-dedicated section that allows a plug-in to safely
-overwrite and restore the contents of a memory location.
-- Get*Address natives.
+overwrite and restore the contents of a memory location
+- Get*Address natives
 
 Developing with this extension is intended for power users that are already getting their hands
-dirty with server internals.  Most developers do not need this kind of flexibility.
+dirty with server internals. Most developers do not need this kind of flexibility.
 
 ### Memory patches
 
@@ -89,14 +89,14 @@ A new `Patches` section is added at the same level of `Addresses`, `Offsets`, an
 
 A few things are present:
 
-- A subsection.  The name of the section will be the name used when getting a `MemoryPatch`
+- A subsection. The name of the section will be the name used when getting a `MemoryPatch`
 handle with `MemoryPatch.FromConf()`.
 - A function `signature` name referencing the name of a signature in a `Signatures` section
 somewhere else in the game config file.
-- The `offset` to patch.  Hexadecimal notation is supported with the `h` suffix, for easy
+- The `offset` to patch. Hexadecimal notation is supported with the `h` suffix, for easy
 referencing in IDA or similar.
+- `match` signatures can use `\x2A` to indicate wildcards, same as SourceMod.
 - `replace` (required) and `match` (optional) Hex strings (`\x01\x02\x03`) indicating the byte payload and a signature to match against at the previously mentioned offset.
-	- `verify` signatures can use `\x2A` to indicate wildcards, same as SourceMod.
 - An optional `preserve` hex string indicating which bits from the original location should be
 copied to the patch.  (New in 0.7.x.)
 	- For example, if you want to copy the high 4 bits in a byte from the original memory,
@@ -135,9 +135,9 @@ patch.Disable();
 A `MemoryBlock` is a `calloc`-allocated chunk of memory that can be accessed with
 `StoreToAddress` and `LoadFromAddress` (indirectly via wrapped helper methods).
 
-Some patches I've dealt with operate on fixed locations in memory (e.g., floating point load
-operations that don't take immediate values), so with this I can point to the `MemoryBlock`
-address space and put in whatever I need.
+Some patches nosoop has dealt with operate on fixed locations in memory (i.e. floating point load
+operations that don't take immediate values), so with this they can point to the `MemoryBlock`
+address space and put in whatever they need.
 
 It's also a useful way of allocating structures for things like `SDKCall`s.
 
@@ -157,7 +157,7 @@ delete block;
 
 ### Get*Address natives
 
-New to Source Scramble 0.6.x, this allows a plug-in to get the address of one of its own
+Introduced to Source Scramble 0.6.x, this allows a plug-in to get the address of one of its own
 variables (`cell_t` or `char[]`).
 
 This replaces certain use cases of memory blocks; you can now point to an existing variable in

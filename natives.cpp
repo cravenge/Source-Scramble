@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 :
+ * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -30,12 +30,12 @@
  */
 
 #include "extension.h"
-
 #ifdef PLATFORM_X64
+
 #ifdef PLATFORM_LINUX
 # define _INTTYPES_H	1
-#endif
 
+#endif
 #include "PseudoAddrManager.h"
 #endif
 
@@ -75,7 +75,7 @@ cell_t GetMemoryBlockSize(IPluginContext* pContext, const cell_t* params)
 
     MemoryBlock* pMemoryBlock;
 
-    if( ( err = handlesys->ReadHandle(hndl, g_MemoryBlock, &sec, ( void** )&pMemoryBlock) )
+    if( ( err = handlesys->ReadHandle(hndl, g_MemoryBlock, &sec, reinterpret_cast< void** >( &pMemoryBlock )) )
           != HandleError_None ) {
         return pContext->ThrowNativeError("Invalid MemoryBlock handle %x (error %d)", hndl, err);
     }
@@ -95,7 +95,7 @@ cell_t GetMemoryBlockAddress(IPluginContext* pContext, const cell_t* params)
 
     MemoryBlock* pMemoryBlock;
 
-    if( ( err = handlesys->ReadHandle(hndl, g_MemoryBlock, &sec, ( void** )&pMemoryBlock) )
+    if( ( err = handlesys->ReadHandle(hndl, g_MemoryBlock, &sec, reinterpret_cast< void** >( &pMemoryBlock )) )
           != HandleError_None ) {
         return pContext->ThrowNativeError("Invalid MemoryBlock handle %x (error %d)", hndl, err);
     }
@@ -157,7 +157,7 @@ cell_t ValidateMemoryPatch(IPluginContext* pContext, const cell_t* params)
 
     MemoryPatch* pMemoryPatch;
 
-    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, ( void** )&pMemoryPatch) )
+    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, reinterpret_cast< void** >( &pMemoryPatch )) )
           != HandleError_None ) {
         return pContext->ThrowNativeError("Invalid MemoryPatch handle %x (error %d)", hndl, err);
     }
@@ -177,7 +177,7 @@ cell_t EnableMemoryPatch(IPluginContext* pContext, const cell_t* params)
 
     MemoryPatch* pMemoryPatch;
 
-    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, ( void** )&pMemoryPatch) )
+    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, reinterpret_cast< void** >( &pMemoryPatch )) )
           != HandleError_None ) {
         return pContext->ThrowNativeError("Invalid MemoryPatch handle %x (error %d)", hndl, err);
     } else if( reinterpret_cast< uintptr_t >( pMemoryPatch->pAddr ) < 0x10000 ) {
@@ -199,7 +199,7 @@ cell_t DisableMemoryPatch(IPluginContext* pContext, const cell_t* params)
 
     MemoryPatch* pMemoryPatch;
 
-    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, ( void** )&pMemoryPatch) )
+    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, reinterpret_cast< void** >( &pMemoryPatch )) )
           != HandleError_None ) {
         return pContext->ThrowNativeError("Invalid MemoryPatch handle %x (error %d)", hndl, err);
     }
@@ -219,7 +219,7 @@ cell_t GetMemoryPatchAddress(IPluginContext* pContext, const cell_t* params)
 
     MemoryPatch* pMemoryPatch;
 
-    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, ( void** )&pMemoryPatch) )
+    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, reinterpret_cast< void** >( &pMemoryPatch )) )
           != HandleError_None ) {
         return pContext->ThrowNativeError("Invalid MemoryPatch handle %x (error %d)", hndl, err);
     }
@@ -231,6 +231,26 @@ cell_t GetMemoryPatchAddress(IPluginContext* pContext, const cell_t* params)
 #endif
 }
 
+cell_t GetMemoryPatchSize(IPluginContext* pContext, const cell_t* params)
+{
+    Handle_t hndl = static_cast< Handle_t >( params[1] );
+
+    HandleError err;
+    HandleSecurity sec;
+
+    sec.pOwner = pContext->GetIdentity();
+    sec.pIdentity = myself->GetIdentity();
+
+    MemoryPatch* pMemoryPatch;
+
+    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, reinterpret_cast< void** >( &pMemoryPatch )) )
+          != HandleError_None ) {
+        return pContext->ThrowNativeError("Invalid MemoryPatch handle %x (error %d)", hndl, err);
+    }
+
+    return static_cast< cell_t >( pMemoryPatch->replace.size() );
+}
+
 cell_t GetCellAddress(IPluginContext* pContext, const cell_t* params)
 {
     cell_t* value;
@@ -239,7 +259,7 @@ cell_t GetCellAddress(IPluginContext* pContext, const cell_t* params)
     }
 
 #ifdef PLATFORM_X64
-    return static_cast< cell_t >( pseudoAddr.ToPseudoAddress( value ) );
+    return static_cast< cell_t >( pseudoAddr.ToPseudoAddress( static_cast< void* >( value ) ) );
 #else
     return static_cast< cell_t >( reinterpret_cast< intptr_t >( value ) );
 #endif
@@ -253,7 +273,7 @@ cell_t GetStringAddress(IPluginContext* pContext, const cell_t* params)
     }
 
 #ifdef PLATFORM_X64
-    return static_cast< cell_t >( pseudoAddr.ToPseudoAddress( buffer ) );
+    return static_cast< cell_t >( pseudoAddr.ToPseudoAddress( static_cast< void* >( buffer ) ) );
 #else
     return static_cast< cell_t >( reinterpret_cast< intptr_t >( buffer ) );
 #endif
@@ -268,6 +288,7 @@ sp_nativeinfo_t g_SrcScrambleNatives[] = {
     { "EnableMemoryPatch",           EnableMemoryPatch },
     { "DisableMemoryPatch",          DisableMemoryPatch },
     { "GetMemoryPatchAddress",       GetMemoryPatchAddress },
+    { "GetMemoryPatchSize",          GetMemoryPatchSize },
 
     { "GetCellAddress",              GetCellAddress },
     { "GetStringAddress",            GetStringAddress },
@@ -280,6 +301,7 @@ sp_nativeinfo_t g_SrcScrambleNatives[] = {
     { "MemoryPatch.Enable",          EnableMemoryPatch },
     { "MemoryPatch.Disable",         DisableMemoryPatch },
     { "MemoryPatch.Address.get",     GetMemoryPatchAddress },
+    { "MemoryPatch.Size.get",        GetMemoryPatchSize },
 
     { nullptr,                       nullptr },
 };

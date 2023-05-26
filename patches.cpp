@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 :
+ * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -59,6 +59,8 @@ static inline bool DoesPlatformMatch( const char* platform ) {
 void PatchGameConfig::ReadSMC_ParseStart() {
     m_ParseState = PSTATE_GAMEDEFS_PATCHES;
     m_IgnoreLevel = 0;
+
+    m_PatchOffset = 0;
 }
 
 SMCResult PatchGameConfig::ReadSMC_NewSection(const SMCStates *states, const char *name)
@@ -69,13 +71,19 @@ SMCResult PatchGameConfig::ReadSMC_NewSection(const SMCStates *states, const cha
     }
 
     if( m_ParseState == PSTATE_GAMEDEFS_PATCHES ) {
-        m_PatchSignature.clear();
-        m_PatchOffset = 0;
-        m_PatchMatch.clear();
-        m_PatchPreserve.clear();
-        m_PatchReplace.clear();
-
         m_Patch = name;
+        if( !m_Patch.empty() ) {
+            StringHashMap< PatchConf >::Result r = m_Patches.find(name);
+            if( r.found() ) {
+                PatchConf &patConf = r->value;
+
+                m_PatchSignature = std::move( patConf.signatureName );
+                m_PatchOffset = patConf.offset;
+                m_PatchMatch = std::move( patConf.match );
+                m_PatchPreserve = std::move( patConf.preserve );
+                m_PatchReplace = std::move( patConf.replace );
+            }
+        }
 
         m_ParseState = PSTATE_GAMEDEFS_PATCHES_PATCH;
     } else if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH ) {
@@ -132,7 +140,14 @@ SMCResult PatchGameConfig::ReadSMC_LeavingSection(const SMCStates *states)
         if( ( !m_Patch.empty() ) && ( !m_PatchSignature.empty() ) ) {
             PatchConf patConf( std::move( m_PatchSignature ), m_PatchOffset, std::move( m_PatchMatch ), std::move( m_PatchPreserve ), std::move( m_PatchReplace ) );
             m_Patches.replace(m_Patch.c_str(), patConf);
+
+            m_PatchSignature.clear();
         }
+
+        m_PatchReplace.clear();
+        m_PatchPreserve.clear();
+        m_PatchMatch.clear();
+        m_PatchOffset = 0;
 
         m_ParseState = PSTATE_GAMEDEFS_PATCHES;
     } else if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE ) {

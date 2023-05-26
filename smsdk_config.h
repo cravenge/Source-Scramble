@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 :
+ * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #define SMEXT_CONF_NAME		"Source Scramble"
 #define SMEXT_CONF_DESCRIPTION	"Presents more tools for developers to work with memory reallocations"
-#define SMEXT_CONF_VERSION	"0.9.0.0"
+#define SMEXT_CONF_VERSION	"0.9.1.0"
 #define SMEXT_CONF_AUTHOR	"nosoop | Updated by cravenge"
 #define SMEXT_CONF_URL		"https://github.com/cravenge/Source-Scramble"
 #define SMEXT_CONF_LOGTAG	"SRCSCRMBL"

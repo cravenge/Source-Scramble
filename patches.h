@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 :
+ * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -33,8 +33,8 @@
 #define _INCLUDE_SOURCEMOD_SRCSCRMBL_PATCHES_H_
 
 #include "smsdk_ext.h"
-#ifndef _GLIBCXX_STRING
 
+#ifndef _GLIBCXX_STRING
 #include <string>
 #endif
 #ifndef _GLIBCXX_VECTOR

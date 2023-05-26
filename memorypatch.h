@@ -1,5 +1,5 @@
 /**
- * vim: set ts=4 :
+ * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod Source Scramble Extension
  * Copyright (C) 2019 nosoop.  All rights reserved.
@@ -40,7 +40,9 @@ public:
 private:
     std::vector< uint8_t > match;
     std::vector< uint8_t > preserve;
+public:
     std::vector< uint8_t > replace;
+private:
     std::vector< uint8_t > original;
 public:
     MemoryPatch( void* addr, const PatchGameConfig::PatchConf& info );
