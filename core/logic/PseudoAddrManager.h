@@ -2,45 +2,45 @@
  * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod
- * Copyright (C) 2004-2017 AlliedModders LLC.  All rights reserved.
+ * Copyright (C) 2004-2017 AlliedModders LLC. All rights reserved
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
- * Free Software Foundation.
+ * Free Software Foundation
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details
  *
  * You should have received a copy of the GNU General Public License along with
- * this program.  If not, see <http://www.gnu.org/licenses/>.
+ * this program. If not, see <http://www.gnu.org/licenses/>
  *
  * As a special exception, AlliedModders LLC gives you permission to link the
- * code of this program (as well as its derivative works) to "Half-Life 2," the
- * "Source Engine," the "SourcePawn JIT," and any Game MODs that run on software
- * by the Valve Corporation.  You must obey the GNU General Public License in
- * all respects for all other code used.  Additionally, AlliedModders LLC grants
- * this exception to all derivative works.  AlliedModders LLC defines further
+ * code of this program (as well as its derivative works) to "Half-Life 2", the
+ * "Source Engine", the "SourcePawn JIT" and any Game MODs that run on software
+ * by the Valve Corporation. You must obey the GNU General Public License in
+ * all respects for all other code used. Additionally, AlliedModders LLC grants
+ * this exception to all derivative works. AlliedModders LLC defines further
  * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
- * or <http://www.sourcemod.net/license.php>.
+ * or <http://www.sourcemod.net/license.php>
  */
 
 #ifndef _INCLUDE_SOURCEMOD_PSEUDOADDRESSMANAGER_H_
 #define _INCLUDE_SOURCEMOD_PSEUDOADDRESSMANAGER_H_
 
-#if defined PLATFORM_WINDOWS
-#ifndef _STDINT_H
-# include <stdint.h>
+# if defined PLATFORM_WINDOWS
+#  ifndef _STDINT_H
+#   include <stdint.h>
 
-#endif
-#elif defined PLATFORM_LINUX
-#ifndef _INTTYPES_H
-# include <inttypes.h>
+#  endif
+# elif defined PLATFORM_LINUX
+#  ifndef _INTTYPES_H
+#   include <inttypes.h>
 
-#endif
-#endif
+#  endif
+# endif
 class PseudoAddressManager {
     static constexpr uint8_t PSEUDO_OFFSET_BITS = 26;
     static constexpr uint8_t PSEUDO_INDEX_BITS = sizeof( uint32_t ) * 8 - PSEUDO_OFFSET_BITS;

@@ -2,29 +2,29 @@
  * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod
- * Copyright (C) 2004-2017 AlliedModders LLC.  All rights reserved.
+ * Copyright (C) 2004-2017 AlliedModders LLC. All rights reserved
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
- * Free Software Foundation.
+ * Free Software Foundation
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details
  *
  * You should have received a copy of the GNU General Public License along with
- * this program.  If not, see <http://www.gnu.org/licenses/>.
+ * this program. If not, see <http://www.gnu.org/licenses/>
  *
  * As a special exception, AlliedModders LLC gives you permission to link the
- * code of this program (as well as its derivative works) to "Half-Life 2," the
- * "Source Engine," the "SourcePawn JIT," and any Game MODs that run on software
- * by the Valve Corporation.  You must obey the GNU General Public License in
- * all respects for all other code used.  Additionally, AlliedModders LLC grants
- * this exception to all derivative works.  AlliedModders LLC defines further
+ * code of this program (as well as its derivative works) to "Half-Life 2", the
+ * "Source Engine", the "SourcePawn JIT" and any Game MODs that run on software
+ * by the Valve Corporation. You must obey the GNU General Public License in
+ * all respects for all other code used. Additionally, AlliedModders LLC grants
+ * this exception to all derivative works. AlliedModders LLC defines further
  * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
- * or <http://www.sourcemod.net/license.php>.
+ * or <http://www.sourcemod.net/license.php>
  */
 
 #include <sm_platform.h>
@@ -69,13 +69,13 @@ void* PseudoAddressManager::GetAllocationBase( void* ptr ) {
 #elif defined PLATFORM_LINUX
     uintptr_t addr = reinterpret_cast< uintptr_t >( ptr );
 
-	// Format:
-	// lower    upper    prot     stuff                 path
-	// 08048000-0804c000 r-xp 00000000 03:03 1010107    /bin/cat
+    // Format:
+    // lower    upper    prot     stuff                 path
+    // 08048000-0804c000 r-xp 00000000 03:03 1010107    /bin/cat
     FILE *fp = fopen( "/proc/self/maps", "r" );
     if( fp ) {
-        uintptr_t lower, upper;
         int c;
+        uintptr_t lower, upper;
 
         while( fscanf( fp, "%" PRIxPTR "-%" PRIxPTR, &lower, &upper ) != EOF ) {
             if( addr >= lower && addr <= upper ) {
@@ -93,10 +93,10 @@ void* PseudoAddressManager::GetAllocationBase( void* ptr ) {
         }
         fclose( fp );
     }
-	return nullptr;
+    return nullptr;
 #elif defined PLATFORM_APPLE
-#ifdef PLATFORM_X64
-#define mach_vm_region vm_region_64
+# ifdef PLATFORM_X64
+#  define mach_vm_region vm_region_64
 
     typedef vm_region_info_64_t mach_vm_region_info_t;
     typedef vm_region_basic_info_data_64_t mach_vm_region_basic_info_data_t;
@@ -105,7 +105,7 @@ void* PseudoAddressManager::GetAllocationBase( void* ptr ) {
     const mach_msg_type_number_t MACH_VM_REGION_BASIC_INFO_COUNT = VM_REGION_BASIC_INFO_COUNT_64;
 
 #else
-#define mach_vm_region vm_region
+#  define mach_vm_region vm_region
 
     typedef vm_region_info_t mach_vm_region_info_t;
     typedef vm_region_basic_info_data_t mach_vm_region_basic_info_data_t;
@@ -136,9 +136,8 @@ void* PseudoAddressManager::GetAllocationBase( void* ptr ) {
 uint32_t PseudoAddressManager::ToPseudoAddress( void* addr ) {
 #ifdef PLATFORM_X64
     void* base = GetAllocationBase( addr );
-    if( !base ) {
+    if( !base )
         return 0;
-    }
 
     uint8_t index = 0;
     bool hasEntry = false;
@@ -153,20 +152,18 @@ uint32_t PseudoAddressManager::ToPseudoAddress( void* addr ) {
     }
     if( !hasEntry ) {
         // Table is full
-        if( m_NumEntries < SM_ARRAYSIZE(m_AllocBases) ) {
+        if( m_NumEntries < SM_ARRAYSIZE(m_AllocBases) )
             return 0;
-        }
 
         index = m_NumEntries;
 
         m_AllocBases[m_NumEntries++] = base;
-	}
+    }
 
     // Ensure difference fits in 26 bits
     ptrdiff_t diff = reinterpret_cast< uintptr_t >( addr ) - reinterpret_cast< uintptr_t >( base );
-    if( diff > ( UINT32_MAX >> PSEUDO_INDEX_BITS ) ) {
+    if( diff > ( UINT32_MAX >> PSEUDO_INDEX_BITS ) )
         return 0;
-    }
 
     return ( index << PSEUDO_OFFSET_BITS ) | static_cast< uint32_t >( diff );
 #else

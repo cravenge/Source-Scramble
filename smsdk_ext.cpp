@@ -2,29 +2,29 @@
  * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod Base Extension Code
- * Copyright (C) 2004-2008 AlliedModders LLC.  All rights reserved.
+ * Copyright (C) 2004-2008 AlliedModders LLC. All rights reserved
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
- * Free Software Foundation.
+ * Free Software Foundation
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details
  *
  * You should have received a copy of the GNU General Public License along with
- * this program.  If not, see <http://www.gnu.org/licenses/>.
+ * this program. If not, see <http://www.gnu.org/licenses/>
  *
  * As a special exception, AlliedModders LLC gives you permission to link the
- * code of this program (as well as its derivative works) to "Half-Life 2," the
- * "Source Engine," the "SourcePawn JIT," and any Game MODs that run on software
- * by the Valve Corporation.  You must obey the GNU General Public License in
- * all respects for all other code used.  Additionally, AlliedModders LLC grants
- * this exception to all derivative works.  AlliedModders LLC defines further
+ * code of this program (as well as its derivative works) to "Half-Life 2", the
+ * "Source Engine", the "SourcePawn JIT" and any Game MODs that run on software
+ * by the Valve Corporation. You must obey the GNU General Public License in
+ * all respects for all other code used. Additionally, AlliedModders LLC grants
+ * this exception to all derivative works. AlliedModders LLC defines further
  * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
- * or <http://www.sourcemod.net/license.php>.
+ * or <http://www.sourcemod.net/license.php>
  *
  * Version: $Id$
  */
@@ -36,11 +36,11 @@
 
 #endif
 #ifdef SMEXT_CONF_METAMOD
-#ifndef META_NO_HL2SDK
+# ifndef META_NO_HL2SDK
 IServerGameDLL* gamedll;
 IVEngineServer* engine;
 
-#endif
+# endif
 ISmmAPI* g_SMAPI;
 ISmmPlugin* g_PLAPI;
 
@@ -98,9 +98,7 @@ IMenuManager* menus;
 IADTFactory* adtfactory;
 #endif
 #ifdef SMEXT_ENABLE_PLUGINSYS
-
 SourceMod::IPluginManager* plsys;
-
 #endif
 #ifdef SMEXT_ENABLE_ADMINSYS
 IAdminSystem* adminsys;
@@ -121,11 +119,11 @@ IRootConsole* rootconsole;
 #ifdef SMEXT_CONF_METAMOD
 SMM_API void* PL_EXPOSURE(const char *pName, int *pReturnCode)
 {
-#ifdef METAMOD_PLAPI_VERSION
+# ifdef METAMOD_PLAPI_VERSION
     if( pName != nullptr && !strcmp( pName, METAMOD_PLAPI_NAME ) )
-#else
+# else
     if( pName != nullptr && !strcmp( pName, PLAPI_NAME ) )
-#endif
+# endif
     {
         if( pReturnCode )
             *pReturnCode = META_IFACE_OK;
@@ -178,14 +176,14 @@ bool SDKExtension::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, 
 {
     PLUGIN_SAVEVARS();
 
-#ifndef META_NO_HL2SDK
-#ifndef METAMOD_PLAPI_VERSION
+# ifndef META_NO_HL2SDK
+#  ifndef METAMOD_PLAPI_VERSION
     GET_V_IFACE_ANY(serverFactory, gamedll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
     GET_V_IFACE_CURRENT(engineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
 
-#else
+#  else
     GET_V_IFACE_ANY(GetServerFactory, gamedll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
-#if SOURCE_ENGINE == SE_SDK2013
+#   if SOURCE_ENGINE == SE_SDK2013
 
     engine = ( IVEngineServer* )ismm->GetEngineFactory()( "VEngineServer023", nullptr );
     if( engine == nullptr ) {
@@ -200,12 +198,12 @@ bool SDKExtension::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, 
         }
     }
 
-#else
+#   else
     GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
 
-#endif
-#endif
-#endif
+#   endif
+#  endif
+# endif
     m_SourceMMLoaded = true;
     return SDK_OnMetamodLoad( ismm, error, maxlen, late );
 }

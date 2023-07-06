@@ -70,18 +70,18 @@ A new `Patches` section is added at the same level of `Addresses`, `Offsets`, an
 	// this patch makes buildings solid to TFBots by forcing certain code paths
 	"CTraceFilterObject::ShouldHitEntity()::TFBotCollideWithBuildings"
 	{
-		"signature" 	"CTraceFilterObject::ShouldHitEntity()"
+		"signature" 		"CTraceFilterObject::ShouldHitEntity()"
 		"linux"
 		{
-			"offset"	"1A6h"
-			"match"		"\x75"
-			"replace"	"\x70"
+			"offset"		"1A6h"
+			"match"			"\x75"
+			"overwrite"		"\x70"
 		}
 		"windows"
 		{
-			"offset"	"9Ah"
-			"match"		"\x74"
-			"replace"	"\x71"
+			"offset"		"9Ah"
+			"match"			"\x74"
+			"overwrite"		"\x71"
 		}
 	}
 }
@@ -96,7 +96,7 @@ somewhere else in the game config file.
 - The `offset` to patch. Hexadecimal notation is supported with the `h` suffix, for easy
 referencing in IDA or similar.
 - `match` signatures can use `\x2A` to indicate wildcards, same as SourceMod.
-- `replace` (required) and `match` (optional) Hex strings (`\x01\x02\x03`) indicating the byte payload and a signature to match against at the previously mentioned offset.
+- `overwrite` (required) and `match` (optional) Hex strings (`\x01\x02\x03`) indicating the byte payload and a signature to match against at the previously mentioned offset.
 - An optional `preserve` hex string indicating which bits from the original location should be
 copied to the patch.  (New in 0.7.x.)
 	- For example, if you want to copy the high 4 bits in a byte from the original memory,

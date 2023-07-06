@@ -2,29 +2,29 @@
  * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * SourceMod Base Extension Code
- * Copyright (C) 2004-2008 AlliedModders LLC.  All rights reserved.
+ * Copyright (C) 2004-2008 AlliedModders LLC. All rights reserved
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
- * Free Software Foundation.
+ * Free Software Foundation
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details
  *
  * You should have received a copy of the GNU General Public License along with
- * this program.  If not, see <http://www.gnu.org/licenses/>.
+ * this program. If not, see <http://www.gnu.org/licenses/>
  *
  * As a special exception, AlliedModders LLC gives you permission to link the
- * code of this program (as well as its derivative works) to "Half-Life 2," the
- * "Source Engine," the "SourcePawn JIT," and any Game MODs that run on software
- * by the Valve Corporation.  You must obey the GNU General Public License in
- * all respects for all other code used.  Additionally, AlliedModders LLC grants
- * this exception to all derivative works.  AlliedModders LLC defines further
+ * code of this program (as well as its derivative works) to "Half-Life 2", the
+ * "Source Engine", the "SourcePawn JIT" and any Game MODs that run on software
+ * by the Valve Corporation. You must obey the GNU General Public License in
+ * all respects for all other code used. Additionally, AlliedModders LLC grants
+ * this exception to all derivative works. AlliedModders LLC defines further
  * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
- * or <http://www.sourcemod.net/license.php>.
+ * or <http://www.sourcemod.net/license.php>
  *
  * Version: $Id$
  */
@@ -34,73 +34,73 @@
 
 #include "smsdk_config.h"
 
-#ifdef SMEXT_CONF_METAMOD
-#ifndef META_NO_HL2SDK
-#include <eiface.h>
+# ifdef SMEXT_CONF_METAMOD
+#  ifndef META_NO_HL2SDK
+#   include <eiface.h>
 
-#endif
-#include <ISmmPlugin.h>
-#ifndef METAMOD_PLAPI_VERSION
+#  endif
+#   include <ISmmPlugin.h>
+#  ifndef METAMOD_PLAPI_VERSION
 
-#include <metamod_wrappers.h>
+#   include <metamod_wrappers.h>
 
-#endif
-#endif
+#  endif
+# endif
 #include <ISourceMod.h>
 #include <IExtensionSys.h>
-#if defined SMEXT_ENABLE_FORWARDSYS            \
-    && !defined SMEXT_ENABLE_TIMERSYS            \
-    && !defined SMEXT_ENABLE_USERMSGS
-#include <IForwardSys.h>
-#endif
-#ifdef SMEXT_ENABLE_PLAYERHELPERS
-#include <IPlayerHelpers.h>
-#endif
-#ifdef SMEXT_ENABLE_DBMANAGER
-#include <IDBDriver.h>
-#endif
-#ifdef SMEXT_ENABLE_GAMECONF
-#include <IGameConfigs.h>
-#endif
-#ifdef SMEXT_ENABLE_MEMUTILS
-#include <IMemoryUtils.h>
-#endif
-#ifdef SMEXT_ENABLE_GAMEHELPERS
-#include <IGameHelpers.h>
-#endif
-#ifdef SMEXT_ENABLE_TIMERSYS
-#include <ITimerSystem.h>
-#endif
-#ifdef SMEXT_ENABLE_THREADER
-#include <IThreader.h>
-#endif
-#ifdef SMEXT_ENABLE_MENUS
-#include <IMenuManager.h>
-#endif
-#ifdef SMEXT_ENABLE_ADTFACTORY
-#include <IADTFactory.h>
-#endif
-#if defined SMEXT_ENABLE_PLUGINSYS            \
-    && !defined SMEXT_ENABLE_FORWARDSYS
-#include <IPluginSys.h>
-#endif
-#if defined SMEXT_ENABLE_ADMINSYS            \
-    && !defined SMEXT_ENABLE_PLAYERHELPERS
-#include <IAdminSystem.h>
-#endif
-#if defined SMEXT_ENABLE_TEXTPARSERS            \
-    && !defined SMEXT_ENABLE_GAMECONF
-#include <ITextParsers.h>
-#endif
-#ifdef SMEXT_ENABLE_USERMSGS
-#include <IUserMessages.h>
-#endif
-#ifdef SMEXT_ENABLE_TRANSLATOR
-#include <ITranslator.h>
-#endif
-#ifdef SMEXT_ENABLE_ROOTCONSOLEMENU
-#include <IRootConsoleMenu.h>
-#endif
+# if defined SMEXT_ENABLE_FORWARDSYS            \
+     && !defined SMEXT_ENABLE_TIMERSYS            \
+     && !defined SMEXT_ENABLE_USERMSGS
+#  include <IForwardSys.h>
+# endif
+# ifdef SMEXT_ENABLE_PLAYERHELPERS
+#  include <IPlayerHelpers.h>
+# endif
+# ifdef SMEXT_ENABLE_DBMANAGER
+#  include <IDBDriver.h>
+# endif
+# ifdef SMEXT_ENABLE_GAMECONF
+#  include <IGameConfigs.h>
+# endif
+# ifdef SMEXT_ENABLE_MEMUTILS
+#  include <IMemoryUtils.h>
+# endif
+# ifdef SMEXT_ENABLE_GAMEHELPERS
+#  include <IGameHelpers.h>
+# endif
+# ifdef SMEXT_ENABLE_TIMERSYS
+#  include <ITimerSystem.h>
+# endif
+# ifdef SMEXT_ENABLE_THREADER
+#  include <IThreader.h>
+# endif
+# ifdef SMEXT_ENABLE_MENUS
+#  include <IMenuManager.h>
+# endif
+# ifdef SMEXT_ENABLE_ADTFACTORY
+#  include <IADTFactory.h>
+# endif
+# if defined SMEXT_ENABLE_PLUGINSYS            \
+     && !defined SMEXT_ENABLE_FORWARDSYS
+#  include <IPluginSys.h>
+# endif
+# if defined SMEXT_ENABLE_ADMINSYS            \
+     && !defined SMEXT_ENABLE_PLAYERHELPERS
+#  include <IAdminSystem.h>
+# endif
+# if defined SMEXT_ENABLE_TEXTPARSERS            \
+     && !defined SMEXT_ENABLE_GAMECONF
+#  include <ITextParsers.h>
+# endif
+# ifdef SMEXT_ENABLE_USERMSGS
+#  include <IUserMessages.h>
+# endif
+# ifdef SMEXT_ENABLE_TRANSLATOR
+#  include <ITranslator.h>
+# endif
+# ifdef SMEXT_ENABLE_ROOTCONSOLEMENU
+#  include <IRootConsoleMenu.h>
+# endif
 
 #include <sm_platform.h>
 
@@ -120,20 +120,20 @@ using namespace SourceMod;
 using namespace SourcePawn;
 
 class SDKExtension : 
-#ifdef SMEXT_CONF_METAMOD
+# ifdef SMEXT_CONF_METAMOD
     public ISmmPlugin,
-#endif
+# endif
     public IExtensionInterface
 {
-#ifdef SMEXT_CONF_METAMOD
+# ifdef SMEXT_CONF_METAMOD
     bool m_SourceMMLoaded;
     bool m_WeAreUnloaded;
     bool m_WeGotPauseChange;
-#endif
+# endif
 public:
     SDKExtension();
 
-#ifdef SMEXT_CONF_METAMOD
+# ifdef SMEXT_CONF_METAMOD
     /**
      * @brief Called when Metamod is attached, before the extension version is called.
      *
@@ -155,7 +155,7 @@ public:
      */
     virtual bool SDK_OnMetamodPauseChange( bool paused, char* error, size_t maxlen );
 
-#endif
+# endif
     /**
      * @brief This is called after the initial loading sequence has been processed.
      *
@@ -186,7 +186,7 @@ public:
      * removed, and the extension is about to be removed from memory.
      */
     virtual void SDK_OnDependenciesDropped();
-#ifdef SMEXT_CONF_METAMOD
+# ifdef SMEXT_CONF_METAMOD
 
     /**
      * @brief Called when Metamod is detaching, after the extension version is called.
@@ -233,8 +233,10 @@ public:
 
     /** Returns the logtag to MM */
     virtual const char *GetLogTag();
-#endif
+# endif
+# ifndef SMEXT_CONF_METAMOD
 public:
+# endif
     virtual bool OnExtensionLoad(IExtension *me, IShareSys *sys, char *error, size_t maxlength, bool late);
     virtual void OnExtensionUnload();
     virtual void OnExtensionsAllLoaded();
@@ -274,15 +276,15 @@ public:
     virtual void OnDependenciesDropped();
 };
 
-#ifdef SMEXT_CONF_METAMOD
-#ifndef META_NO_HL2SDK
+# ifdef SMEXT_CONF_METAMOD
+#  ifndef META_NO_HL2SDK
 extern IServerGameDLL* gamedll;
 extern IVEngineServer* engine;
 
-#endif
+#  endif
 PLUGIN_GLOBALVARS();
 
-#endif
+# endif
 extern SDKExtension* g_pExtensionIface;
 
 extern IExtension* myself;
@@ -306,63 +308,74 @@ extern IShareSys* sharesys;				/* Note: Newer name */
 
 extern ISourceMod* g_pSM;
 extern ISourceMod* smutils;				/* Note: Newer name */
+# ifdef SMEXT_ENABLE_FORWARDSYS
 
-#ifdef SMEXT_ENABLE_FORWARDSYS
 extern IForwardManager* g_pForwards;
 extern IForwardManager* forwards;		/* Note: Newer name */
-#endif
+# endif
+# ifdef SMEXT_ENABLE_HANDLESYS
 
-#ifdef SMEXT_ENABLE_HANDLESYS
 extern IHandleSys* g_pHandleSys;
 extern IHandleSys* handlesys;			/* Note: Newer name */
-#endif
+# endif
+# ifdef SMEXT_ENABLE_PLAYERHELPERS
 
-#ifdef SMEXT_ENABLE_PLAYERHELPERS
 extern IPlayerManager* playerhelpers;
-#endif
-#ifdef SMEXT_ENABLE_DBMANAGER
+# endif
+# ifdef SMEXT_ENABLE_DBMANAGER
+
 extern IDBManager* dbi;
-#endif
-#ifdef SMEXT_ENABLE_GAMECONF
+# endif
+# ifdef SMEXT_ENABLE_GAMECONF
+
 extern IGameConfigManager* gameconfs;
-#endif
-#ifdef SMEXT_ENABLE_MEMUTILS
+# endif
+# ifdef SMEXT_ENABLE_MEMUTILS
+
 extern IMemoryUtils* memutils;
-#endif
-#ifdef SMEXT_ENABLE_GAMEHELPERS
+# endif
+# ifdef SMEXT_ENABLE_GAMEHELPERS
+
 extern IGameHelpers* gamehelpers;
-#endif
-#ifdef SMEXT_ENABLE_TIMERSYS
+# endif
+# ifdef SMEXT_ENABLE_TIMERSYS
+
 extern ITimerSystem* timersys;
-#endif
-#ifdef SMEXT_ENABLE_THREADER
+# endif
+# ifdef SMEXT_ENABLE_THREADER
+
 extern IThreader* threader;
-#endif
-#ifdef SMEXT_ENABLE_LIBSYS
+# endif
+# ifdef SMEXT_ENABLE_LIBSYS
+
 extern ILibrarySys* libsys;
-#endif
-#ifdef SMEXT_ENABLE_MENUS
+# endif
+# ifdef SMEXT_ENABLE_MENUS
+
 extern IMenuManager* menus;
-#endif
-#ifdef SMEXT_ENABLE_ADTFACTORY
+# endif
+# ifdef SMEXT_ENABLE_ADTFACTORY
+
 extern IADTFactory* adtfactory;
-#endif
-#ifdef SMEXT_ENABLE_PLUGINSYS
+# endif
+# ifdef SMEXT_ENABLE_PLUGINSYS
 
 extern SourceMod::IPluginManager* plsys;
+# endif
+# ifdef SMEXT_ENABLE_ADMINSYS
 
-#endif
-#ifdef SMEXT_ENABLE_ADMINSYS
 extern IAdminSystem* adminsys;
-#endif
-#ifdef SMEXT_ENABLE_USERMSGS
-extern IUserMessages* usermsgs;
-#endif
-#ifdef SMEXT_ENABLE_TRANSLATOR
-extern ITranslator* translator;
-#endif
-#ifdef SMEXT_ENABLE_ROOTCONSOLEMENU
-extern IRootConsole* rootconsole;
-#endif
+# endif
+# ifdef SMEXT_ENABLE_USERMSGS
 
+extern IUserMessages* usermsgs;
+# endif
+# ifdef SMEXT_ENABLE_TRANSLATOR
+
+extern ITranslator* translator;
+# endif
+# ifdef SMEXT_ENABLE_ROOTCONSOLEMENU
+
+extern IRootConsole* rootconsole;
+# endif
 #endif // _INCLUDE_SOURCEMOD_EXTENSION_BASESDK_H_

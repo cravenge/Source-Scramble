@@ -126,7 +126,6 @@ def SetArchFlags(compiler):
         compiler.linkflags += ['-arch', 'x86_64']
   elif compiler.like('msvc'):
     if compiler.target.arch == 'x86':
-      compiler.defines += ['WIN32']
       compiler.linkflags += ['/MACHINE:X86']
     elif compiler.target.arch == 'x86_64':
       compiler.defines += ['WIN64']
@@ -197,6 +196,7 @@ class SrcScrambleConfig(object):
         if sdk_path is None or not os.path.isdir(sdk_path):
           if (use_all and sdk_name != 'mock') or sdk_name in sdk_list:
             raise Exception('Could not find a valid path for {0}'.format(sdk.envvar))
+
           continue
 
         if use_all or sdk_list[0] == 'present' or sdk_name in sdk_list:
@@ -267,12 +267,12 @@ class SrcScrambleConfig(object):
 
   def configure_gcc(self, cxx):
     cxx.defines += [
+      'stricmp=strcasecmp',
+      '_snprintf=snprintf',
+      '_stricmp=strcasecmp',
+      '_vsnprintf=vsnprintf',
       'HAVE_STDINT_H',
       'GNUC',
-      '_stricmp=strcasecmp',
-      '_snprintf=snprintf',
-      '_vsnprintf=vsnprintf',
-      'stricmp=strcasecmp',
     ]
     cxx.cflags += [
       '-fno-strict-aliasing',
@@ -302,11 +302,12 @@ class SrcScrambleConfig(object):
     if cxx.version == 'clang-3.9' or cxx.version == 'apple-clang-8.0':
       cxx.cflags += ['-Wno-varargs']
 
-    if cxx.version >= 'clang-10.0' or cxx.version >= 'apple-clang-12.0':
-      cxx.cflags += [
-          '-Wno-implicit-int-float-conversion',
-          '-Wno-tautological-overlap-compare',
-      ]
+    if len(self.sdks) > 0:
+      if cxx.version >= 'clang-10.0' or cxx.version >= 'apple-clang-12.0':
+        cxx.cflags += [
+            '-Wno-implicit-int-float-conversion',
+            '-Wno-tautological-overlap-compare',
+        ]
 
     if cxx.family == 'gcc':
       cxx.cflags += ['-mfpmath=sse']
@@ -352,9 +353,9 @@ class SrcScrambleConfig(object):
 
   def configure_msvc(self, cxx):
     cxx.defines += [
+      '_CRT_NONSTDC_NO_DEPRECATE',
       '_CRT_SECURE_NO_DEPRECATE',
       '_CRT_SECURE_NO_WARNINGS',
-      '_CRT_NONSTDC_NO_DEPRECATE',
       '_ITERATOR_DEBUG_LEVEL=0',
     ]
 
@@ -397,7 +398,7 @@ class SrcScrambleConfig(object):
   def configure_linux(self, cxx):
     cxx.defines += ['_LINUX', 'POSIX', '_FILE_OFFSET_BITS=64']
 
-    cxx.linkflags += ['-lm']
+    cxx.linkflags += ['-Wl,--exclude-libs,ALL', '-lm']
     if cxx.family == 'clang':
       cxx.linkflags += ['-lgcc_eh']
     elif cxx.family == 'gcc':
@@ -406,16 +407,22 @@ class SrcScrambleConfig(object):
 
   def configure_mac(self, cxx):
     cxx.defines += ['OSX', '_OSX', 'POSIX', 'KE_ABSOLUTELY_NO_STL']
-    cxx.cflags += ['-mmacosx-version-min=10.7']
+
+    if cxx.version >= 'apple-clang-10.0':
+      cxx.cflags += ['-mmacosx-version-min=10.9']
+      cxx.linkflags += ['-mmacosx-version-min=10.9']
+    else:
+      cxx.cflags += ['-mmacosx-version-min=10.7']
+      cxx.linkflags += ['-mmacosx-version-min=10.7']
+
     cxx.cxxflags += ['-stdlib=libc++']
     cxx.linkflags += [
       '-lc++',
-      '-mmacosx-version-min=10.7',
       '-stdlib=libc++',
     ]
 
   def configure_windows(self, cxx):
-    cxx.defines += ['_WINDOWS']
+    cxx.defines += ['WIN32', '_WINDOWS']
 
   def AddVersioning(self, binary):
     if binary.compiler.target.platform == 'mac':
@@ -447,8 +454,7 @@ class SrcScrambleConfig(object):
 
     if '-lgcc_eh' in binary.compiler.linkflags:
       binary.compiler.linkflags.remove('-lgcc_eh')
-
-    if '-static-libgcc' in binary.compiler.linkflags:
+    elif '-static-libgcc' in binary.compiler.linkflags:
       binary.compiler.linkflags.remove('-static-libgcc')
 
     if binary.compiler.like('gcc'):
@@ -500,14 +506,14 @@ class SrcScrambleConfig(object):
     SetArchFlags(compiler)
 
     if compiler.target.arch == 'x86_64':
-      compiler.defines += ['X64BITS', 'PLATFORM_64BITS']
+      compiler.defines += ['PLATFORM_64BITS', 'X64BITS']
 
     if compiler.like('gcc'):
       if sdk.name in ['bms', 'pvkii', 'sdk2013']:
-        compiler.defines.remove('_stricmp=strcasecmp')
-        compiler.defines.remove('_snprintf=snprintf')
-        compiler.defines.remove('_vsnprintf=vsnprintf')
         compiler.defines.remove('stricmp=strcasecmp')
+        compiler.defines.remove('_snprintf=snprintf')
+        compiler.defines.remove('_stricmp=strcasecmp')
+        compiler.defines.remove('_vsnprintf=vsnprintf')
 
       compiler.defines += ['COMPILER_GCC']
     else:
@@ -543,8 +549,8 @@ class SrcScrambleConfig(object):
         compiler.cxxflags += ['-std=c++11']
         compiler.cxxflags += ['-stdlib=libstdc++']
 
-        compiler.linkflags.remove('-stdlib=libc++')
         compiler.linkflags.remove('-lc++')
+        compiler.linkflags.remove('-stdlib=libc++')
 
         compiler.linkflags += ['-lstdc++', '-stdlib=libstdc++']
 
