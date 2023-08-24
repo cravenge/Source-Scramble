@@ -37,7 +37,7 @@
 #include <sourcehook.h>
 #include <sh_memory.h>
 
-MemoryPatch::MemoryPatch( void* addr, const PatchGameConfig::PatchConf &info ) : retained( true ) {
+MemoryPatch::MemoryPatch( void* addr, const PatchGameConfig::PatchConf &info ) {
     this->pAddr = reinterpret_cast< void* >( reinterpret_cast< uint8_t* >( addr ) + info.offset );
 
     for( auto mtch : info.match ) {
@@ -50,6 +50,10 @@ MemoryPatch::MemoryPatch( void* addr, const PatchGameConfig::PatchConf &info ) :
 
     for( auto ovr : info.overwrite ) {
         this->overwrite.emplace_back( ovr );
+    } if( info.onetime ) {
+        this->retained = false;
+    } else {
+        this->retained = true;
     }
 }
 

@@ -34,8 +34,8 @@
 
 #include "memoryblock.h"
 
-MemoryBlock::MemoryBlock( size_t size ) : size( size ), stored( true ) {
-    this->pBlock = calloc( size, 1 );
+MemoryBlock::MemoryBlock( size_t sz, bool store ) : size( sz ), stored( store ) {
+    this->pBlock = calloc( sz, 1 );
 }
 
 MemoryBlock::~MemoryBlock() {

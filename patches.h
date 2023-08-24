@@ -52,6 +52,7 @@ class PatchGameConfig : public ITextListener_SMC {
     std::vector< uint8_t > m_PatchMatch;
     std::vector< uint8_t > m_PatchPreserve;
     std::vector< uint8_t > m_PatchOverwrite;
+    bool m_PatchOneTime;
 public:
     void ReadSMC_ParseStart();
     SMCResult ReadSMC_NewSection(const SMCStates *states, const char *name);
@@ -60,13 +61,14 @@ public:
 
     struct PatchConf {
         PatchConf() {}
-        PatchConf( std::string &&sigName, int ofst, std::vector< uint8_t > &&mtch, std::vector< uint8_t > &&presv, std::vector< uint8_t > &&ovr );
+        PatchConf( std::string &&sigName, int ofst, std::vector< uint8_t > &&mtch, std::vector< uint8_t > &&presv, std::vector< uint8_t > &&ovr, bool ot );
 
         std::string signatureName;
         int offset;
         std::vector< uint8_t > match;
         std::vector< uint8_t > preserve;
         std::vector< uint8_t > overwrite;
+        bool onetime;
     };
 
     StringHashMap< PatchConf > m_Patches;

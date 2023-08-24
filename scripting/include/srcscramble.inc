@@ -30,7 +30,6 @@
 
 #if defined _srcscramble_included
  #endinput
-
 #endif
 #define _srcscramble_included
 
@@ -42,13 +41,12 @@ methodmap MemoryBlock < Handle
 	// changed after creation.
 	//
 	// @param size          The number of entries the block can hold
+	// @param stored        If true, the block will be owned by the extension and
+	//                      will be freed once either its handle will get deleted or
+	//                      the extension will be unloaded. Otherwise, it will still
+	//                      remain until the server is closed
 	// @return              A handle to the memory block or null on failure
-	public native MemoryBlock(int size);
-
-	// Disowns a block
-	//
-	// @error               Block not owned by extension anymore
-	public native void Disown();
+	public native MemoryBlock(int size, bool stored = true);
 
 	// Retrieves up to 4 bytes from a block
 	//
@@ -164,11 +162,6 @@ methodmap MemoryPatch < Handle
 	// @error               Invalid patch data type, index or value
 	public native void SetData(const char[] type, int index, int value);
 
-	// Discards a patch
-	//
-	// @error               Patch not tended to by extension anymore
-	public native void Discard();
-
 	// Retrieves the address of the patch
 	property Address Address {
 		public native get();
@@ -202,17 +195,13 @@ stock static int GetNumberTypeByteCount(NumberType size)
  * changed after creation.
  *
  * @param size              The number of entries the block can hold
+ * @param stored            If true, the block will be owned by the extension and will be
+ *                          freed once its handle will get deleted or the extension will
+ *                          be unloaded. Otherwise, it will still remain until the server
+ *                          is closed
  * @return                  A handle to the memory block or null on failure
  */
-native MemoryBlock CreateMemoryBlock(int size);
-
-/**
- * Disowns a block
- *
- * @param block             Block Handle
- * @error                   Invalid Handle or block not owned by extension anymore
- */
-native void DisownMemoryBlock(Handle block);
+native MemoryBlock CreateMemoryBlock(int size, bool stored = true);
 
 /**
  * Retrieves up to 4 bytes from a block
@@ -377,14 +366,6 @@ native int GetMemoryPatchData(Handle patch, const char[] type, int index);
 native void SetMemoryPatchData(Handle patch, const char[] type, int index, int value);
 
 /**
- * Discards a patch
- *
- * @param patch             Patch Handle
- * @error                   Invalid Handle or patch not tended to by extension anymore
- */
-native void DiscardMemoryPatch(Handle patch);
-
-/**
  * Retrieves the address of the patch
  *
  * @param patch             Patch Handle
@@ -433,7 +414,6 @@ public Extension __ext_srcscrmbl =
 public void __ext_srcscrmbl_SetNTVOptional()
 {
 	MarkNativeAsOptional("CreateMemoryBlock");
-	MarkNativeAsOptional("DisownMemoryBlock");
 	MarkNativeAsOptional("GetMemoryBlockSize");
 	MarkNativeAsOptional("GetMemoryBlockAddress");
 	MarkNativeAsOptional("CreateMemoryPatchFromConf");
@@ -445,14 +425,12 @@ public void __ext_srcscrmbl_SetNTVOptional()
 	MarkNativeAsOptional("SetMemoryPatchSize");
 	MarkNativeAsOptional("GetMemoryPatchData");
 	MarkNativeAsOptional("SetMemoryPatchData");
-	MarkNativeAsOptional("DiscardMemoryPatch");
 	MarkNativeAsOptional("GetMemoryPatchAddress");
 	
 	MarkNativeAsOptional("GetCellAddress");
 	MarkNativeAsOptional("GetStringAddress");
 	
 	MarkNativeAsOptional("MemoryBlock.MemoryBlock");
-	MarkNativeAsOptional("MemoryBlock.Disown");
 	MarkNativeAsOptional("MemoryBlock.Size.get");
 	MarkNativeAsOptional("MemoryBlock.Address.get");
 	MarkNativeAsOptional("MemoryPatch.FromConf");
@@ -464,7 +442,6 @@ public void __ext_srcscrmbl_SetNTVOptional()
 	MarkNativeAsOptional("MemoryPatch.SetSize");
 	MarkNativeAsOptional("MemoryPatch.GetData");
 	MarkNativeAsOptional("MemoryPatch.SetData");
-	MarkNativeAsOptional("MemoryPatch.Discard");
 	MarkNativeAsOptional("MemoryPatch.Address.get");
 }
 

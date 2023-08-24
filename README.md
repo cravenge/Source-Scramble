@@ -25,7 +25,7 @@ Regardless, all patches do require a game configuration file installed in `gamed
 This was originally just dedicated to memory patching. nosoop had a number of gripes with existing
 solutions like [Memory Patcher][], [No Thriller Taunt][], and one-off plug-ins for this purpose:
 
-1.  Plug-ins either hardcode the solution, or use some custom conventions in their game config file. (Solutions they has seen others use / written myself either pollute the `Keys` section or do their own config parsing with `SMCParser`)
+1.  Plug-ins either hardcode the solution, or use some custom conventions in their game config file. (Solutions they has seen others use / written themself either pollute the `Keys` section or do their own config parsing with `SMCParser`)
 2.  There is no verification on bytes to be patched. (What if a game update modifies the
 function?)
 3.  Reverting the patch would have to be manually implemented. Some plug-ins neglect to do this
@@ -65,24 +65,35 @@ A new `Patches` section is added at the same level of `Addresses`, `Offsets`, an
 `Signatures` in the game configuration file.  An example of a section is below:
 
 ```
-"Patches"
+"Games"
 {
-	// this patch makes buildings solid to TFBots by forcing certain code paths
-	"CTraceFilterObject::ShouldHitEntity()::TFBotCollideWithBuildings"
+	"tf2"
 	{
-		"signature" 		"CTraceFilterObject::ShouldHitEntity()"
-		"linux"
+		...
+		
+		"Patches"
 		{
-			"offset"		"1A6h"
-			"match"			"\x75"
-			"overwrite"		"\x70"
+			// this patch makes buildings solid to TFBots by forcing certain code paths
+			"CTFOShouldHitEntity_BotToBuildingCollisionCondition"
+			{
+				"signature" 	"CTraceFilterObject::ShouldHitEntity"
+				"linux"
+				{
+					"offset"	"1A6h"
+					"match"		"\x75"
+					"overwrite"	"\x70"
+				}
+				"windows"
+				{
+					"offset"	"9Ah"
+					"match"		"\x74"
+					"overwrite"	"\x71"
+				}
+				"one-time"		"no"
+			}
 		}
-		"windows"
-		{
-			"offset"		"9Ah"
-			"match"			"\x74"
-			"overwrite"		"\x71"
-		}
+
+		...
 	}
 }
 ```
@@ -95,8 +106,10 @@ handle with `MemoryPatch.FromConf()`.
 somewhere else in the game config file.
 - The `offset` to patch. Hexadecimal notation is supported with the `h` suffix, for easy
 referencing in IDA or similar.
-- `match` signatures can use `\x2A` to indicate wildcards, same as SourceMod.
-- `overwrite` (required) and `match` (optional) Hex strings (`\x01\x02\x03`) indicating the byte payload and a signature to match against at the previously mentioned offset.
+- `overwrite` (required) and `match` (optional) hex strings (`\x01\x02\x03`) indicating the byte payload and a signature to match against at the previously mentioned offset.
+- `match` hex string can use `\x2A` to indicate wildcards, same as SourceMod.
+- `one-time` indicating whether the patch, once applied, should be left intact or not even when
+the `MemoryPatch` handle that came along with it will be deleted.
 - An optional `preserve` hex string indicating which bits from the original location should be
 copied to the patch.  (New in 0.7.x.)
 	- For example, if you want to copy the high 4 bits in a byte from the original memory,
@@ -115,7 +128,7 @@ This should be fairly self-explanatory:
 // GameData hGameConf = new GameData(...);
 
 // as mentioned, patches are cleaned up when the handle is deleted
-MemoryPatch patch = MemoryPatch.FromConf(hGameConf, "CTraceFilterObject::ShouldHitEntity()::TFBotCollideWithBuildings");
+MemoryPatch patch = MemoryPatch.FromConf(hGameConf, "CTFOShouldHitEntity_BotToBuildingCollisionCondition");
 
 if (!patch.Validate()) {
 	ThrowError("Failed to verify patch.");

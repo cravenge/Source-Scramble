@@ -45,7 +45,7 @@ public:
     void* pBlock;
     bool stored;
 
-    MemoryBlock( size_t size );
+    MemoryBlock( size_t sz, bool store );
     ~MemoryBlock();
 };
 

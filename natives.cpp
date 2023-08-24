@@ -48,7 +48,7 @@ cell_t CreateMemoryBlock(IPluginContext* pContext, const cell_t* params)
     if( size <= 0 )
         return pContext->ThrowNativeError("Invalid size (must be > 0)");
 
-    MemoryBlock* pMemoryBlock = new MemoryBlock( size );
+    MemoryBlock* pMemoryBlock = new MemoryBlock( size, static_cast< bool >( params[2] ) );
     if( pMemoryBlock == nullptr )
         return 0;
 
@@ -61,29 +61,6 @@ cell_t CreateMemoryBlock(IPluginContext* pContext, const cell_t* params)
     if( !hndl )
         delete pMemoryBlock;
     return static_cast< cell_t >( hndl );
-}
-
-cell_t DisownMemoryBlock(IPluginContext* pContext, const cell_t* params)
-{
-    Handle_t hndl = static_cast< Handle_t >( params[1] );
-
-    HandleError err;
-    HandleSecurity sec;
-
-    sec.pOwner = pContext->GetIdentity();
-    sec.pIdentity = myself->GetIdentity();
-
-    MemoryBlock* pMemoryBlock;
-
-    if( ( err = handlesys->ReadHandle(hndl, g_MemoryBlock, &sec, reinterpret_cast< void** >( &pMemoryBlock )) )
-          != HandleError_None )
-        return pContext->ThrowNativeError("Invalid Handle %x (error %d)", hndl, err);
-
-    if( !pMemoryBlock->stored )
-        return pContext->ThrowNativeError("Memory block is already disowned");
-
-    pMemoryBlock->stored = false;
-    return 0;
 }
 
 cell_t GetMemoryBlockSize(IPluginContext* pContext, const cell_t* params)
@@ -177,7 +154,10 @@ cell_t ValidateMemoryPatch(IPluginContext* pContext, const cell_t* params)
           != HandleError_None )
         return pContext->ThrowNativeError("Invalid Handle %x (error %d)", hndl, err);
 
-    return pMemoryPatch->Validate();
+    bool ret = pMemoryPatch->Validate();
+    if( !ret )
+        handlesys->FreeHandle(hndl, &sec);
+    return static_cast< cell_t >( ret );
 }
 
 cell_t IsMemoryPatchActive(IPluginContext* pContext, const cell_t* params)
@@ -196,7 +176,7 @@ cell_t IsMemoryPatchActive(IPluginContext* pContext, const cell_t* params)
           != HandleError_None )
         return pContext->ThrowNativeError("Invalid Handle %x (error %d)", hndl, err);
 
-    return pMemoryPatch->IsActive();
+    return static_cast< cell_t >( pMemoryPatch->IsActive() );
 }
 
 cell_t EnableMemoryPatch(IPluginContext* pContext, const cell_t* params)
@@ -218,7 +198,11 @@ cell_t EnableMemoryPatch(IPluginContext* pContext, const cell_t* params)
         return pContext->ThrowNativeError("Invalid address 0x%x is pointing to reserved memory", pMemoryPatch->pAddr);
     }
 
-    return pMemoryPatch->Enable();
+    bool ret = pMemoryPatch->Enable();
+
+    if( !pMemoryPatch->retained )
+        handlesys->FreeHandle(hndl, &sec);
+    return static_cast< cell_t >( ret );
 }
 
 cell_t DisableMemoryPatch(IPluginContext* pContext, const cell_t* params)
@@ -237,7 +221,7 @@ cell_t DisableMemoryPatch(IPluginContext* pContext, const cell_t* params)
           != HandleError_None )
         return pContext->ThrowNativeError("Invalid Handle %x (error %d)", hndl, err);
 
-    return pMemoryPatch->Disable();
+    return static_cast< cell_t >( pMemoryPatch->Disable() );
 }
 
 cell_t GetMemoryPatchSize(IPluginContext* pContext, const cell_t* params)
@@ -450,29 +434,6 @@ cell_t SetMemoryPatchData(IPluginContext* pContext, const cell_t* params)
     return pContext->ThrowNativeError("Invalid patch data type \"%s\"", key);
 }
 
-cell_t DiscardMemoryPatch(IPluginContext* pContext, const cell_t* params)
-{
-    Handle_t hndl = static_cast< Handle_t >( params[1] );
-
-    HandleError err;
-    HandleSecurity sec;
-
-    sec.pOwner = pContext->GetIdentity();
-    sec.pIdentity = myself->GetIdentity();
-
-    MemoryPatch* pMemoryPatch;
-
-    if( ( err = handlesys->ReadHandle(hndl, g_MemoryPatch, &sec, reinterpret_cast< void** >( &pMemoryPatch )) )
-          != HandleError_None )
-        return pContext->ThrowNativeError("Invalid Handle %x (error %d)", hndl, err);
-
-    if( !pMemoryPatch->retained )
-        return pContext->ThrowNativeError("Memory patch is already discarded");
-
-    pMemoryPatch->retained = false;
-    return 0;
-}
-
 cell_t GetMemoryPatchAddress(IPluginContext* pContext, const cell_t* params)
 {
     Handle_t hndl = static_cast< Handle_t >( params[1] );
@@ -524,7 +485,6 @@ cell_t GetStringAddress(IPluginContext* pContext, const cell_t* params)
 
 sp_nativeinfo_t g_SrcScrambleNatives[] = {
     { "CreateMemoryBlock",           CreateMemoryBlock },
-    { "DisownMemoryBlock",           DisownMemoryBlock },
     { "GetMemoryBlockSize",          GetMemoryBlockSize },
     { "GetMemoryBlockAddress",       GetMemoryBlockAddress },
     { "CreateMemoryPatchFromConf",   CreateMemoryPatchFromConf },
@@ -536,14 +496,12 @@ sp_nativeinfo_t g_SrcScrambleNatives[] = {
     { "SetMemoryPatchSize",          SetMemoryPatchSize },
     { "GetMemoryPatchData",          GetMemoryPatchData },
     { "SetMemoryPatchData",          SetMemoryPatchData },
-    { "DiscardMemoryPatch",          DiscardMemoryPatch },
     { "GetMemoryPatchAddress",       GetMemoryPatchAddress },
 
     { "GetCellAddress",              GetCellAddress },
     { "GetStringAddress",            GetStringAddress },
 
     { "MemoryBlock.MemoryBlock",     CreateMemoryBlock },
-    { "MemoryBlock.Disown",          DisownMemoryBlock },
     { "MemoryBlock.Size.get",        GetMemoryBlockSize },
     { "MemoryBlock.Address.get",     GetMemoryBlockAddress },
     { "MemoryPatch.FromConf",        CreateMemoryPatchFromConf },
@@ -555,7 +513,6 @@ sp_nativeinfo_t g_SrcScrambleNatives[] = {
     { "MemoryPatch.SetSize",         SetMemoryPatchSize },
     { "MemoryPatch.GetData",         GetMemoryPatchData },
     { "MemoryPatch.SetData",         SetMemoryPatchData },
-    { "MemoryPatch.Discard",         DiscardMemoryPatch },
     { "MemoryPatch.Address.get",     GetMemoryPatchAddress },
 
     { nullptr,                       nullptr },

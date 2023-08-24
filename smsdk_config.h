@@ -37,7 +37,7 @@
 
 #define SMEXT_CONF_NAME		"Source Scramble"
 #define SMEXT_CONF_DESCRIPTION	"Presents more tools for developers to work with memory reallocations"
-#define SMEXT_CONF_VERSION	"0.10.0.0"
+#define SMEXT_CONF_VERSION	"0.11.0.0"
 #define SMEXT_CONF_AUTHOR	"nosoop | Updated by cravenge"
 #define SMEXT_CONF_URL		"https://github.com/cravenge/Source-Scramble"
 #define SMEXT_CONF_LOGTAG	"SRCSCRMBL"

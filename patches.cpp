@@ -64,6 +64,7 @@ void PatchGameConfig::ReadSMC_ParseStart() {
     m_IgnoreLevel = 0;
 
     m_PatchOffset = 0;
+    m_PatchOneTime = false;
 }
 
 SMCResult PatchGameConfig::ReadSMC_NewSection(const SMCStates *states, const char *name)
@@ -85,6 +86,7 @@ SMCResult PatchGameConfig::ReadSMC_NewSection(const SMCStates *states, const cha
                 m_PatchMatch = std::move( patConf.match );
                 m_PatchPreserve = std::move( patConf.preserve );
                 m_PatchOverwrite = std::move( patConf.overwrite );
+                m_PatchOneTime = patConf.onetime;
             }
         }
 
@@ -114,7 +116,10 @@ SMCResult PatchGameConfig::ReadSMC_KeyValue(const SMCStates *states, const char 
         return SMCResult_Continue;
     }
 
-    if( !strcmp( key, "overwrite" ) ) {
+    if( !strcmp( key, "one-time" ) ) {
+        if( !strcmp( value, "yes" ) )
+            m_PatchOneTime = true;
+    } else if( !strcmp( key, "overwrite" ) ) {
         m_PatchOverwrite = EscapedHexToByteVector( value );
     } else if( !strcmp( key, "preserve" ) ) {
         m_PatchPreserve = EscapedHexToByteVector( value );
@@ -141,16 +146,19 @@ SMCResult PatchGameConfig::ReadSMC_LeavingSection(const SMCStates *states)
 
     if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH ) {
         if( ( !m_Patch.empty() ) && ( !m_PatchSignature.empty() ) ) {
-            PatchConf patConf( std::move( m_PatchSignature ), m_PatchOffset, std::move( m_PatchMatch ), std::move( m_PatchPreserve ), std::move( m_PatchOverwrite ) );
+            PatchConf patConf( std::move( m_PatchSignature ), m_PatchOffset, std::move( m_PatchMatch ), std::move( m_PatchPreserve ), std::move( m_PatchOverwrite ), m_PatchOneTime );
             m_Patches.replace(m_Patch.c_str(), patConf);
 
             m_PatchSignature.clear();
         }
 
+        if( m_PatchOneTime )
+            m_PatchOneTime = false;
         m_PatchOverwrite.clear();
         m_PatchPreserve.clear();
         m_PatchMatch.clear();
-        m_PatchOffset = 0;
+        if( m_PatchOffset )
+            m_PatchOffset = 0;
 
         m_ParseState = PSTATE_GAMEDEFS_PATCHES;
     } else if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE ) {
@@ -159,10 +167,11 @@ SMCResult PatchGameConfig::ReadSMC_LeavingSection(const SMCStates *states)
     return SMCResult_Continue;
 }
 
-PatchGameConfig::PatchConf::PatchConf( std::string &&sigName, int ofst, std::vector< uint8_t > &&mtch, std::vector< uint8_t > &&presv, std::vector< uint8_t > &&ovr ) {
+PatchGameConfig::PatchConf::PatchConf( std::string &&sigName, int ofst, std::vector< uint8_t > &&mtch, std::vector< uint8_t > &&presv, std::vector< uint8_t > &&ovr, bool ot ) {
     this->signatureName = std::move( sigName );
     this->offset = ofst;
     this->match = std::move( mtch );
     this->preserve = std::move( presv );
     this->overwrite = std::move( ovr );
+    this->onetime = ot;
 }
