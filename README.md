@@ -108,12 +108,12 @@ somewhere else in the game config file.
 referencing in IDA or similar.
 - `overwrite` (required) and `match` (optional) hex strings (`\x01\x02\x03`) indicating the byte payload and a signature to match against at the previously mentioned offset.
 - `match` hex string can use `\x2A` to indicate wildcards, same as SourceMod.
-- `one-time` indicating whether the patch, once applied, should be left intact or not even when
-the `MemoryPatch` handle that came along with it will be deleted.
 - An optional `preserve` hex string indicating which bits from the original location should be
 copied to the patch.  (New in 0.7.x.)
 	- For example, if you want to copy the high 4 bits in a byte from the original memory,
 	that would be represented in binary as `0b11110000`, and you would use `\xF0`.
+- `one-time`, which is also optional, indicating whether the patch, once applied, should be left
+intact or not even when the `MemoryPatch` handle that came along with it will be deleted.
 
 Any values written on top of an applied patch will be reverted back when the patch is removed.
 
