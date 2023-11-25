@@ -46,6 +46,10 @@ Insurgency = {
   'linux': ['x86'],
   'mac': ['x86', 'x86_64'],
 }
+MCV = {
+  'windows': ['x86_64'],
+  'linux': ['x86_64'],
+}
 Source2 = {
   'windows': ['x86', 'x86_64'],
   'linux': ['x86_64'],
@@ -74,7 +78,7 @@ SDKMap = {
   'insurgency':  SDK('HL2SDKINSURGENCY', '2.insurgency', '19', 'INSURGENCY', Insurgency, 'insurgency'),
   'l4d':  SDK('HL2SDKL4D', '2.l4d', '13', 'LEFT4DEAD', WinLinuxMac, 'l4d'),
   'l4d2': SDK('HL2SDKL4D2', '2.l4d2', '16', 'LEFT4DEAD2', WinLinuxMac, 'l4d2'),
-  'mcv': SDK('HL2SDKMCV', '2.mcv', '22', 'MCV', WinLinux, 'mcv'),
+  'mcv': SDK('HL2SDKMCV', '2.mcv', '22', 'MCV', MCV, 'mcv'),
   'nucleardawn': SDK('HL2SDKND', '2.nd', '14', 'NUCLEARDAWN', WinLinuxMac, 'nucleardawn'),
   'portal2':  SDK('HL2SDKPORTAL2', '2.portal2', '18', 'PORTAL2', [], 'portal2'),
   'pvkii': SDK('HL2SDKPVKII', '2.pvkii', '10', 'PVKII', WinLinuxMac, 'pvkii'),
@@ -112,24 +116,25 @@ def Normalize(path):
 
 def SetArchFlags(compiler):
   if compiler.behavior == 'gcc':
+    if compiler.target.arch == 'x86_64':
+      compiler.cflags += ['-fPIC']
+
+  if compiler.like('gcc'):
     if compiler.target.arch == 'x86':
       compiler.cflags += ['-m32']
-
       compiler.linkflags += ['-m32']
-      if compiler.target.platform == 'mac':
-        compiler.linkflags += ['-arch', 'i386']
     elif compiler.target.arch == 'x86_64':
-      compiler.cflags += ['-m64', '-fPIC']
-
+      compiler.cflags += ['-m64']
       compiler.linkflags += ['-m64']
-      if compiler.target.platform == 'mac':
-        compiler.linkflags += ['-arch', 'x86_64']
   elif compiler.like('msvc'):
     if compiler.target.arch == 'x86':
       compiler.linkflags += ['/MACHINE:X86']
     elif compiler.target.arch == 'x86_64':
-      compiler.defines += ['WIN64']
       compiler.linkflags += ['/MACHINE:X64']
+
+  if compiler.target.platform == 'windows':
+    if compiler.target.arch == 'x86_64':
+      compiler.defines += ['WIN64']
 
 class SrcScrambleConfig(object):
   def __init__(self):
@@ -174,7 +179,7 @@ class SrcScrambleConfig(object):
     import re
     with open(os.path.join(builder.sourcePath, 'product.version'), 'r') as fp:
       productContents = fp.read()
-    m = re.match('(\d+)\.(\d+)\.(\d+).*', productContents)
+    m = re.match(r'(\d+)\.(\d+)\.(\d+).*', productContents)
     if m == None:
       self.productVersion = '1.0.0'
     else:
@@ -238,14 +243,14 @@ class SrcScrambleConfig(object):
 
   def configure_cxx(self, cxx):
     if cxx.family == 'clang':
-      if cxx.version < 'clang-3.4':
-        raise Exception('Only clang versions 3.4 or greater are supported, c++14 support is required.')
+      if cxx.version < 'clang-5':
+        raise Exception('Only clang versions 5 or later are supported, full C++17 support is required.')
     elif cxx.family == 'gcc':
-      if cxx.version < 'gcc-4.9':
-        raise Exception('Only GCC versions 4.9 or greater are supported, c++14 support is required.')
+      if cxx.version < 'gcc-9':
+        raise Exception('Only GCC versions 9 or later are supported, full C++17 support is required.')
     elif cxx.family == 'msvc':
-      if cxx.version < 1900:
-        raise Exception('Only MSVC 2015 and later are supported, c++14 support is required.')
+      if cxx.version < 1914:
+        raise Exception('Only MSVC 2017 15.7 and later are supported, full C++17 support is required.')
 
     if cxx.like('gcc'):
       self.configure_gcc(cxx)
@@ -265,6 +270,10 @@ class SrcScrambleConfig(object):
     elif cxx.target.platform == 'windows':
       self.configure_windows(cxx)
 
+    cxx.includes += [
+      os.path.join(self.sm_root, 'public'),
+    ]
+
   def configure_gcc(self, cxx):
     cxx.defines += [
       'stricmp=strcasecmp',
@@ -277,7 +286,6 @@ class SrcScrambleConfig(object):
     cxx.cflags += [
       '-fno-strict-aliasing',
       '-fvisibility=hidden',
-      '-msse',
       '-pipe',
       '-Wall',
       '-Werror',
@@ -285,6 +293,8 @@ class SrcScrambleConfig(object):
       '-Wno-switch',
       '-Wno-unused',
     ]
+    if cxx.target.arch in ['x86', 'x86_64']:
+      cxx.cflags += ['-msse']
 
     have_clang = cxx.family == 'clang'
     if have_clang:
@@ -319,26 +329,23 @@ class SrcScrambleConfig(object):
     cxx.cxxflags += [
       '-fno-threadsafe-statics',
       '-fvisibility-inlines-hidden',
+      '-std=c++17',
       '-Wno-non-virtual-dtor',
+      '-Wno-register',
       '-Wno-overloaded-virtual',
     ]
 
+    if have_clang or (cxx.version >= 'gcc-4.7'):
+      cxx.cxxflags += ['-Wno-delete-non-virtual-dtor']
+
     if cxx.version >= 'apple-clang-3.0' or cxx.version >= 'clang-2.9':
       cxx.cxxflags += ['-Wno-null-dereference']
-
-    if cxx.version == 'apple-clang-6.0' or cxx.version == 'clang-3.4':
-      cxx.cxxflags += ['-std=c++1y']
-    else:
-      cxx.cxxflags += ['-std=c++14']
 
     if cxx.version > 'apple-clang-6.0' or cxx.version == 'clang-3.4' or cxx.version >= 'clang-3.9':
       cxx.cxxflags += ['-Wno-expansion-to-defined']
 
     if cxx.version >= 'apple-clang-7.0' or cxx.version >= 'clang-3.4':
       cxx.cxxflags += ['-Wno-inconsistent-missing-override']
-
-    if have_clang or (cxx.version >= 'gcc-4.7'):
-      cxx.cxxflags += ['-Wno-delete-non-virtual-dtor']
 
     if cxx.version >= 'gcc-9.0':
       cxx.cxxflags += ['-Wno-class-memaccess', '-Wno-packed-not-aligned']
@@ -370,6 +377,7 @@ class SrcScrambleConfig(object):
       '/EHsc',
       '/GR-',
       '/TP',
+      '/std:c++17',
     ]
     cxx.linkflags += [
       'kernel32.lib',
@@ -408,15 +416,10 @@ class SrcScrambleConfig(object):
   def configure_mac(self, cxx):
     cxx.defines += ['OSX', '_OSX', 'POSIX', 'KE_ABSOLUTELY_NO_STL']
 
-    if cxx.version >= 'apple-clang-10.0':
-      cxx.cflags += ['-mmacosx-version-min=10.9']
-      cxx.linkflags += ['-mmacosx-version-min=10.9']
-    else:
-      cxx.cflags += ['-mmacosx-version-min=10.7']
-      cxx.linkflags += ['-mmacosx-version-min=10.7']
-
+    cxx.cflags += ['-mmacosx-version-min=10.15']
     cxx.cxxflags += ['-stdlib=libc++']
     cxx.linkflags += [
+      '-mmacosx-version-min=10.5',
       '-lc++',
       '-stdlib=libc++',
     ]
@@ -454,7 +457,8 @@ class SrcScrambleConfig(object):
 
     if '-lgcc_eh' in binary.compiler.linkflags:
       binary.compiler.linkflags.remove('-lgcc_eh')
-    elif '-static-libgcc' in binary.compiler.linkflags:
+
+    if '-static-libgcc' in binary.compiler.linkflags:
       binary.compiler.linkflags.remove('-static-libgcc')
 
     if binary.compiler.like('gcc'):
@@ -485,8 +489,7 @@ class SrcScrambleConfig(object):
     return self.StaticLibraryBuilder(compiler, name)
 
   def ConfigureForExtension(self, context, compiler):
-    compiler.includes += [
-      os.path.join(self.sm_root, 'public'),
+    compiler.cxxincludes += [
       os.path.join(self.sm_root, 'public', 'amtl'),
       os.path.join(self.sm_root, 'public', 'amtl', 'amtl'),
       os.path.join(self.sm_root, 'sourcepawn', 'include'),
@@ -540,10 +543,8 @@ class SrcScrambleConfig(object):
         compiler.linkflags += ['-lstdc++']
     elif compiler.target.platform == 'mac':
       if sdk.name in ['csgo']:
-        if 'c++1y' in compiler.cxxflags:
-          compiler.cxxflags.remove('-std=c++1y')
-        elif 'c++14' in compiler.cxxflags:
-          compiler.cxxflags.remove('-std=c++14')
+        if 'c++17' in compiler.cxxflags:
+          compiler.cxxflags.remove('-std=c++17')
         compiler.cxxflags.remove('-stdlib=libc++')
 
         compiler.cxxflags += ['-std=c++11']
@@ -596,6 +597,12 @@ class SrcScrambleConfig(object):
         lib_folder = os.path.join(sdk.path, 'lib', 'mac')
 
     if compiler.target.platform in ['linux', 'mac']:
+      if sdk.name in ['blade', 'csgo', 'doi', 'insurgency', 'mcv']:
+        if compiler.target.arch == 'x86_64':
+          compiler.postlink += [os.path.join(lib_folder, 'interfaces.a')]
+        else:
+          compiler.postlink += [os.path.join(lib_folder, 'interfaces_i486.a')]
+
       if sdk.name in ['bms', 'pvkii', 'sdk2013'] or compiler.target.arch == 'x86_64':
         compiler.postlink += [
           os.path.join(lib_folder, 'tier1.a'),
@@ -607,20 +614,14 @@ class SrcScrambleConfig(object):
           os.path.join(lib_folder, 'mathlib_i486.a')
         ]
 
-      if sdk.name in ['blade', 'csgo', 'doi', 'insurgency', 'mcv']:
-        if compiler.target.arch == 'x86_64':
-          compiler.postlink += [os.path.join(lib_folder, 'interfaces.a')]
-        else:
-          compiler.postlink += [os.path.join(lib_folder, 'interfaces_i486.a')]
-
     dynamic_libs = []
     if compiler.target.platform == 'linux':
-      if sdk.name in ['bms', 'css', 'dods', 'doi', 'hl2dm', 'insurgency', 'l4d2', 'nucleardawn', 'sdk2013', 'tf2']:
-        dynamic_libs = ['libtier0_srv.so', 'libvstdlib_srv.so']
-      elif compiler.target.arch == 'x86_64' and sdk.name in ['csgo', 'mock']:
+      if compiler.target.arch == 'x86_64' and sdk.name in ['csgo', 'mock']:
         dynamic_libs = ['libtier0_client.so', 'libvstdlib_client.so']
-      elif sdk.name in ['blade', 'csgo', 'l4d', 'pvkii']:
+      elif sdk.name in ['blade', 'csgo', 'l4d', 'mcv', 'pvkii']:
         dynamic_libs = ['libtier0.so', 'libvstdlib.so']
+      elif sdk.name in ['bms', 'css', 'dods', 'doi', 'hl2dm', 'insurgency', 'l4d2', 'nucleardawn', 'sdk2013', 'tf2']:
+        dynamic_libs = ['libtier0_srv.so', 'libvstdlib_srv.so']
       else:
         dynamic_libs = ['tier0_i486.so', 'vstdlib_i486.so']
     elif compiler.target.platform == 'mac':

@@ -5,6 +5,7 @@
  * 
  * Copyright (C) 2019 nosoop
  * Copyright (C) 2023 cravenge
+ *
  * All rights reserved
  * =============================================================================
  *
@@ -37,8 +38,15 @@
 
 #include "patches.h"
 
-class MemoryPatch {
-public:
+struct MemoryPatch {
+    MemoryPatch( void* addr, std::vector< uint8_t > &&mtch, std::vector< uint8_t > &&presv, std::vector< uint8_t > &&ovr, bool ot );
+    MemoryPatch( void* addr, const PatchGameConfig::PatchConf &info );
+    ~MemoryPatch();
+
+    bool Validate();
+    bool Enable();
+    bool Disable();
+
     void* pAddr;
 
     std::vector< uint8_t > match;
@@ -46,15 +54,7 @@ public:
     std::vector< uint8_t > overwrite;
     std::vector< uint8_t > original;
 
-    bool retained;
-
-    MemoryPatch( void* addr, const PatchGameConfig::PatchConf &info );
-    ~MemoryPatch();
-
-    bool Validate();
-    bool IsActive();
-    bool Enable();
-    bool Disable();
+    bool onetime;
 };
 
 #endif // _INCLUDE_SOURCEMOD_SRCSCRMBL_MEMPATCH_H_

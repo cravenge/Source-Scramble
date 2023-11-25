@@ -36,6 +36,11 @@
 
 #endif
 #ifdef SMEXT_CONF_METAMOD
+# if defined _MSC_VER
+# define SMEXT_DLL_EXPORT extern "C" __declspec(dllexport)
+# else
+# define SMEXT_DLL_EXPORT extern "C" __attribute__((visibility("default")))
+# endif
 # ifndef META_NO_HL2SDK
 IServerGameDLL* gamedll;
 IVEngineServer* engine;
@@ -117,22 +122,9 @@ IRootConsole* rootconsole;
 #endif
 
 #ifdef SMEXT_CONF_METAMOD
-SMM_API void* PL_EXPOSURE(const char *pName, int *pReturnCode)
+SMEXT_DLL_EXPORT METAMOD_PLUGIN *CreateInterface_MMS(const MetamodVersionInfo *mvi, const MetamodLoaderInfo *mli)
 {
-# ifdef METAMOD_PLAPI_VERSION
-    if( pName != nullptr && !strcmp( pName, METAMOD_PLAPI_NAME ) )
-# else
-    if( pName != nullptr && !strcmp( pName, PLAPI_NAME ) )
-# endif
-    {
-        if( pReturnCode )
-            *pReturnCode = META_IFACE_OK;
-        return static_cast< void* >( g_pExtensionIface );
-    }
-
-    if( pReturnCode )
-        *pReturnCode = META_IFACE_FAILED;
-    return nullptr;
+    return g_pExtensionIface->SDK_OnMetamodCreateInterface(mvi, mli);
 }
 
 #endif
@@ -149,6 +141,11 @@ SDKExtension::SDKExtension() {
 }
 
 #ifdef SMEXT_CONF_METAMOD
+METAMOD_PLUGIN *SDKExtension::SDK_OnMetamodCreateInterface(const MetamodVersionInfo *mvi, const MetamodLoaderInfo *mli)
+{
+    return this;
+}
+
 bool SDKExtension::SDK_OnMetamodLoad( ISmmAPI* ismm, char* error, size_t maxlen, bool late ) {
     return true;
 }

@@ -4,29 +4,28 @@ import os
 for cxx in builder.targets:
   binary = SrcScramble.ExtLibrary(builder, cxx, 'srcscramble.ext')
   if binary.compiler.behavior == 'gcc':
-    binary.compiler.defines += ['_GLIBCXX_USE_CXX11_ABI=0']
-
     if binary.compiler.target.arch == 'x86':
       binary.compiler.cflags += ['-fPIC']
 
-    if binary.compiler.target.platform == 'linux':
-      binary.compiler.linkflags.remove('-static-libstdc++')
-    elif binary.compiler.target.platform == 'mac':
-      if 'c++1y' in binary.compiler.cxxflags:
-        binary.compiler.cxxflags.remove('-std=c++1y')
-      elif 'c++14' in binary.compiler.cxxflags:
-        binary.compiler.cxxflags.remove('-std=c++14')
-      binary.compiler.cxxflags.remove('-stdlib=libc++')
-
-      binary.compiler.cxxflags += ['-std=c++11']
-      binary.compiler.cxxflags += ['-stdlib=libstdc++']
-
-      binary.compiler.linkflags.remove('-lc++')
-      binary.compiler.linkflags.remove('-stdlib=libc++')
-
-      binary.compiler.linkflags += ['-lstdc++', '-stdlib=libstdc++']
+  if binary.compiler.like('gcc'):
+    binary.compiler.defines += ['_GLIBCXX_USE_CXX11_ABI=0']
 
     binary.compiler.cxxflags += ['-fno-exceptions']
+
+  if binary.compiler.target.platform == 'linux':
+    binary.compiler.linkflags.remove('-static-libstdc++')
+  elif binary.compiler.target.platform == 'mac':
+    if 'c++17' in binary.compiler.cxxflags:
+      binary.compiler.cxxflags.remove('-std=c++17')
+    binary.compiler.cxxflags.remove('-stdlib=libc++')
+
+    binary.compiler.cxxflags += ['-std=c++11']
+    binary.compiler.cxxflags += ['-stdlib=libstdc++']
+
+    binary.compiler.linkflags.remove('-lc++')
+    binary.compiler.linkflags.remove('-stdlib=libc++')
+
+    binary.compiler.linkflags += ['-lstdc++', '-stdlib=libstdc++']
 
   binary.compiler.includes += [
     os.path.join(SrcScramble.mms_root, 'core', 'sourcehook'),
@@ -42,8 +41,10 @@ for cxx in builder.targets:
     'util.cpp',
     'smsdk_ext.cpp',
   ]
-
   if binary.compiler.target.arch == 'x86_64':
     binary.sources += ['core/logic/PseudoAddrManager.cpp']
+
+  if binary.compiler.target.platform == 'linux':
+    binary.sources += ['public/amtl/compat/stdcxx.cpp']
 
   SrcScramble.extensions += [builder.Add(binary)]

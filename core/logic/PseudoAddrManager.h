@@ -32,12 +32,12 @@
 
 # if defined PLATFORM_WINDOWS
 #  ifndef _STDINT_H
-#   include <stdint.h>
+#  include <stdint.h>
 
 #  endif
 # elif defined PLATFORM_LINUX
 #  ifndef _INTTYPES_H
-#   include <inttypes.h>
+#  include <inttypes.h>
 
 #  endif
 # endif

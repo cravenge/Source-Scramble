@@ -96,7 +96,7 @@ void* PseudoAddressManager::GetAllocationBase( void* ptr ) {
     return nullptr;
 #elif defined PLATFORM_APPLE
 # ifdef PLATFORM_X64
-#  define mach_vm_region vm_region_64
+# define mach_vm_region vm_region_64
 
     typedef vm_region_info_64_t mach_vm_region_info_t;
     typedef vm_region_basic_info_data_64_t mach_vm_region_basic_info_data_t;
@@ -104,8 +104,8 @@ void* PseudoAddressManager::GetAllocationBase( void* ptr ) {
     const vm_region_flavor_t MACH_VM_REGION_BASIC_INFO = VM_REGION_BASIC_INFO_64;
     const mach_msg_type_number_t MACH_VM_REGION_BASIC_INFO_COUNT = VM_REGION_BASIC_INFO_COUNT_64;
 
-#else
-#  define mach_vm_region vm_region
+# else
+# define mach_vm_region vm_region
 
     typedef vm_region_info_t mach_vm_region_info_t;
     typedef vm_region_basic_info_data_t mach_vm_region_basic_info_data_t;
@@ -113,7 +113,7 @@ void* PseudoAddressManager::GetAllocationBase( void* ptr ) {
     const vm_region_flavor_t MACH_VM_REGION_BASIC_INFO = VM_REGION_BASIC_INFO;
     const mach_msg_type_number_t MACH_VM_REGION_BASIC_INFO_COUNT = VM_REGION_BASIC_INFO_COUNT;
 
-#endif
+# endif
     vm_size_t size;
     vm_address_t vmaddr = reinterpret_cast< vm_address_t >( ptr );
 

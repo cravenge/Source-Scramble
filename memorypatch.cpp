@@ -5,6 +5,7 @@
  * 
  * Copyright (C) 2019 nosoop
  * Copyright (C) 2023 cravenge
+ *
  * All rights reserved
  * =============================================================================
  *
@@ -37,9 +38,16 @@
 #include <sourcehook.h>
 #include <sh_memory.h>
 
+MemoryPatch::MemoryPatch( void* addr, std::vector< uint8_t > &&mtch, std::vector< uint8_t > &&presv, std::vector< uint8_t > &&ovr, bool ot ) {
+    this->pAddr = addr;
+    this->match = std::move( mtch );
+    this->preserve = std::move( presv );
+    this->overwrite = std::move( ovr );
+    this->onetime = ot;
+}
+
 MemoryPatch::MemoryPatch( void* addr, const PatchGameConfig::PatchConf &info ) {
     this->pAddr = reinterpret_cast< void* >( reinterpret_cast< uint8_t* >( addr ) + info.offset );
-
     for( auto mtch : info.match ) {
         this->match.emplace_back( mtch );
     }
@@ -50,15 +58,12 @@ MemoryPatch::MemoryPatch( void* addr, const PatchGameConfig::PatchConf &info ) {
 
     for( auto ovr : info.overwrite ) {
         this->overwrite.emplace_back( ovr );
-    } if( info.onetime ) {
-        this->retained = false;
-    } else {
-        this->retained = true;
     }
+    this->onetime = info.onetime;
 }
 
 MemoryPatch::~MemoryPatch() {
-    if( this->retained ) {
+    if( !this->onetime ) {
         if( this->original.size() ) {
             size_t i = 0;
             while( i < this->original.size() ) {
@@ -87,13 +92,6 @@ bool MemoryPatch::Validate() {
 
         i++;
     }
-    return true;
-}
-
-bool MemoryPatch::IsActive() {
-    if( !this->original.size() )
-        return false;
-
     return true;
 }
 

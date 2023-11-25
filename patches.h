@@ -5,6 +5,7 @@
  * 
  * Copyright (C) 2019 nosoop
  * Copyright (C) 2023 cravenge
+ *
  * All rights reserved
  * =============================================================================
  *
@@ -48,10 +49,13 @@ class PatchGameConfig : public ITextListener_SMC {
 
     std::string m_Patch;
     std::string m_PatchSignature;
+
     int m_PatchOffset;
+
     std::vector< uint8_t > m_PatchMatch;
     std::vector< uint8_t > m_PatchPreserve;
     std::vector< uint8_t > m_PatchOverwrite;
+
     bool m_PatchOneTime;
 public:
     void ReadSMC_ParseStart();

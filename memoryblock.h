@@ -5,6 +5,7 @@
  * 
  * Copyright (C) 2019 nosoop
  * Copyright (C) 2023 cravenge
+ *
  * All rights reserved
  * =============================================================================
  *
@@ -36,17 +37,16 @@
 #define _INCLUDE_SOURCEMOD_SRCSCRMBL_MEMBLOCK_H_
 
 # ifndef _STDLIB_H_
-#  include <stdlib.h>
+# include <stdlib.h>
 
 # endif
-class MemoryBlock {
-public:
+struct MemoryBlock {
+    MemoryBlock( size_t sz, bool store );
+    ~MemoryBlock();
+
     size_t size;
     void* pBlock;
     bool stored;
-
-    MemoryBlock( size_t sz, bool store );
-    ~MemoryBlock();
 };
 
 #endif // _INCLUDE_SOURCEMOD_SRCSCRMBL_MEMBLOCK_H_

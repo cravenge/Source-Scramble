@@ -5,6 +5,7 @@
  * 
  * Copyright (C) 2019 nosoop
  * Copyright (C) 2023 cravenge
+ * 
  * All rights reserved
  * =============================================================================
  *
@@ -33,10 +34,11 @@
  */
 
 #include "extension.h"
+#include "util.h"
 
 #ifdef PLATFORM_X64
 # ifdef PLATFORM_LINUX
-#  define _INTTYPES_H	1
+# define _INTTYPES_H	1
 
 # endif
 #include "PseudoAddrManager.h"
@@ -48,7 +50,11 @@ cell_t CreateMemoryBlock(IPluginContext* pContext, const cell_t* params)
     if( size <= 0 )
         return pContext->ThrowNativeError("Invalid size (must be > 0)");
 
-    MemoryBlock* pMemoryBlock = new MemoryBlock( size, static_cast< bool >( params[2] ) );
+    bool keep = false;
+    if( params[0] == 2 )
+        keep = static_cast< bool >( params[2] );
+
+    MemoryBlock* pMemoryBlock = new MemoryBlock( size, keep );
     if( pMemoryBlock == nullptr )
         return 0;
 
@@ -103,6 +109,43 @@ cell_t GetMemoryBlockAddress(IPluginContext* pContext, const cell_t* params)
 #else
     return static_cast< cell_t >( reinterpret_cast< uintptr_t >( pMemoryBlock->pBlock ) );
 #endif
+}
+
+cell_t CreateMemoryPatch(IPluginContext* pContext, const cell_t* params)
+{
+#ifdef PLATFORM_X64
+    void* addr = pseudoAddr.FromPseudoAddress( static_cast< uintptr_t >( params[1] ) );
+#else
+    void* addr = reinterpret_cast< void* >( params[1] );
+#endif
+    if( addr == nullptr )
+        return pContext->ThrowNativeError("Address cannot be null");
+
+    char* bytes;
+    pContext->LocalToString(params[2], &bytes);
+
+    std::vector mtchVec = EscapedHexToByteVector( bytes );
+
+    pContext->LocalToString(params[3], &bytes);
+
+    std::vector presvVec = EscapedHexToByteVector( bytes );
+
+    pContext->LocalToString(params[4], &bytes);
+
+    std::vector ovrVec = EscapedHexToByteVector( bytes );
+
+    bool once = false;
+    if( params[0] == 5 )
+        once = static_cast< bool >( params[5] );
+
+    MemoryPatch* pMemoryPatch = new MemoryPatch( addr, std::move( mtchVec ), std::move( presvVec ), std::move( ovrVec ), once );
+    if( pMemoryPatch == nullptr )
+        return 0;
+
+    Handle_t hndl = handlesys->CreateHandle(g_MemoryPatch, pMemoryPatch, pContext->GetIdentity(), myself->GetIdentity(), nullptr);
+    if( !hndl )
+        delete pMemoryPatch;
+    return static_cast< cell_t >( hndl );
 }
 
 cell_t CreateMemoryPatchFromConf(IPluginContext* pContext, const cell_t* params)
@@ -160,7 +203,7 @@ cell_t ValidateMemoryPatch(IPluginContext* pContext, const cell_t* params)
     return static_cast< cell_t >( ret );
 }
 
-cell_t IsMemoryPatchActive(IPluginContext* pContext, const cell_t* params)
+cell_t IsOneTimeMemoryPatch(IPluginContext* pContext, const cell_t* params)
 {
     Handle_t hndl = static_cast< Handle_t >( params[1] );
 
@@ -176,7 +219,7 @@ cell_t IsMemoryPatchActive(IPluginContext* pContext, const cell_t* params)
           != HandleError_None )
         return pContext->ThrowNativeError("Invalid Handle %x (error %d)", hndl, err);
 
-    return static_cast< cell_t >( pMemoryPatch->IsActive() );
+    return static_cast< cell_t >( pMemoryPatch->onetime );
 }
 
 cell_t EnableMemoryPatch(IPluginContext* pContext, const cell_t* params)
@@ -196,11 +239,13 @@ cell_t EnableMemoryPatch(IPluginContext* pContext, const cell_t* params)
         return pContext->ThrowNativeError("Invalid Handle %x (error %d)", hndl, err);
     } else if( reinterpret_cast< uintptr_t >( pMemoryPatch->pAddr ) < 0x10000 ) {
         return pContext->ThrowNativeError("Invalid address 0x%x is pointing to reserved memory", pMemoryPatch->pAddr);
+    } else if( !pMemoryPatch->overwrite.size() ) {
+        return pContext->ThrowNativeError("There are no bytes provided to replace the ones in the address");
     }
 
     bool ret = pMemoryPatch->Enable();
 
-    if( !pMemoryPatch->retained )
+    if( pMemoryPatch->onetime )
         handlesys->FreeHandle(hndl, &sec);
     return static_cast< cell_t >( ret );
 }
@@ -348,7 +393,7 @@ cell_t GetMemoryPatchData(IPluginContext* pContext, const cell_t* params)
 
         return static_cast< cell_t >( pMemoryPatch->original[idx] );
     }
-    
+
     return pContext->ThrowNativeError("Invalid patch data type \"%s\"", key);
 }
 
@@ -487,9 +532,10 @@ sp_nativeinfo_t g_SrcScrambleNatives[] = {
     { "CreateMemoryBlock",           CreateMemoryBlock },
     { "GetMemoryBlockSize",          GetMemoryBlockSize },
     { "GetMemoryBlockAddress",       GetMemoryBlockAddress },
+    { "CreateMemoryPatch",           CreateMemoryPatch },
     { "CreateMemoryPatchFromConf",   CreateMemoryPatchFromConf },
     { "ValidateMemoryPatch",         ValidateMemoryPatch },
-    { "IsMemoryPatchActive",         IsMemoryPatchActive },
+    { "IsOneTimeMemoryPatch",        IsOneTimeMemoryPatch },
     { "EnableMemoryPatch",           EnableMemoryPatch },
     { "DisableMemoryPatch",          DisableMemoryPatch },
     { "GetMemoryPatchSize",          GetMemoryPatchSize },
@@ -504,9 +550,10 @@ sp_nativeinfo_t g_SrcScrambleNatives[] = {
     { "MemoryBlock.MemoryBlock",     CreateMemoryBlock },
     { "MemoryBlock.Size.get",        GetMemoryBlockSize },
     { "MemoryBlock.Address.get",     GetMemoryBlockAddress },
+    { "MemoryPatch.MemoryPatch",     CreateMemoryPatch },
     { "MemoryPatch.FromConf",        CreateMemoryPatchFromConf },
     { "MemoryPatch.Validate",        ValidateMemoryPatch },
-    { "MemoryPatch.IsActive",        IsMemoryPatchActive },
+    { "MemoryPatch.IsOneTime",       IsOneTimeMemoryPatch },
     { "MemoryPatch.Enable",          EnableMemoryPatch },
     { "MemoryPatch.Disable",         DisableMemoryPatch },
     { "MemoryPatch.GetSize",         GetMemoryPatchSize },

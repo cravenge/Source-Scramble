@@ -5,6 +5,7 @@
  * 
  * Copyright (C) 2019 nosoop
  * Copyright (C) 2023 cravenge
+ *
  * All rights reserved
  * =============================================================================
  *
@@ -39,6 +40,6 @@ MemoryBlock::MemoryBlock( size_t sz, bool store ) : size( sz ), stored( store ) 
 }
 
 MemoryBlock::~MemoryBlock() {
-    if( this->stored )
+    if( !this->stored )
         free( this->pBlock );
 }

@@ -5,6 +5,7 @@
  * 
  * Copyright (C) 2019 nosoop
  * Copyright (C) 2023 cravenge
+ *
  * All rights reserved
  * =============================================================================
  *
@@ -36,7 +37,7 @@
 #define _INCLUDE_SOURCEMOD_SRCSCRMBL_UTIL_H_
 
 # ifndef _STDINT_H
-#  include "stdint.h"
+# include "stdint.h"
 
 # endif
 #include <vector>

@@ -41,12 +41,11 @@ methodmap MemoryBlock < Handle
 	// changed after creation.
 	//
 	// @param size          The number of entries the block can hold
-	// @param stored        If true, the block will be owned by the extension and
-	//                      will be freed once either its handle will get deleted or
-	//                      the extension will be unloaded. Otherwise, it will still
-	//                      remain until the server is closed
+	// @param keep          If true, the block will still remain until the server
+	//                      is closed. Otherwise, it will be freed when either
+	//                      its handle is deleted or the extension is unloaded
 	// @return              A handle to the memory block or null on failure
-	public native MemoryBlock(int size, bool stored = true);
+	public native MemoryBlock(int size, bool keep = false);
 
 	// Retrieves up to 4 bytes from a block
 	//
@@ -56,9 +55,9 @@ methodmap MemoryBlock < Handle
 	// @return              Value read
 	// @error               index + GetNumberTypeByteCount(size) > this.Size
 	public int GetData(int index, NumberType size) {
-		if( index < 0 || index + GetNumberTypeByteCount(size) > this.Size ) {
-			ThrowError("Invalid index %d (count: %d)", index, this.Size);
-		}
+		int blocksize = this.Size;
+		if( index < 0 || index + GetNumberTypeByteCount(size) > blocksize )
+			ThrowError("Invalid index %d (count: %d)", index, blocksize);
 		
 		return LoadFromAddress(this.Address + view_as<Address>(index), size);
 	}
@@ -71,9 +70,9 @@ methodmap MemoryBlock < Handle
 	//                      If setting a floating-point value, use NumberType_Int32
 	// @error               index + GetNumberTypeByteCount(size) > this.Size
 	public void SetData(int index, any value, NumberType size) {
-		if( index < 0 || index + GetNumberTypeByteCount(size) > this.Size ) {
-			ThrowError("Invalid index %d (count: %d)", index, this.Size);
-		}
+		int blocksize = this.Size;
+		if( index < 0 || index + GetNumberTypeByteCount(size) > blocksize )
+			ThrowError("Invalid index %d (count: %d)", index, blocksize);
 		
 		StoreToAddress(this.Address + view_as<Address>(index), value, size);
 	}
@@ -91,6 +90,23 @@ methodmap MemoryBlock < Handle
 
 methodmap MemoryPatch < Handle
 {
+	// Creates a patch
+	//
+	// @param addr          Address to a memory location
+	// @param match         Optional binary data to use for checking if the 
+	//                      byte(s) is/are the same in the exact order with
+	//                      the one(s) given
+	// @param preserve      Optional binary data to use for conserving bytes
+	//                      during the overwriting process
+	// @param overwrite     Binary data to use for replacing bytes
+	// @param once          If true, the replaced byte(s) will not be reverted
+	//                      to the original one(s) unless the server is shut down.
+	//                      Otherwise, everything within the address will go back
+	//                      to the way it was before after the patch handle is
+	//                      deleted or the extension is unloaded
+	// @return              A handle to the memory patch or null on failure
+	public native MemoryPatch(Address addr, const char[] match = "", const char[] preserve = "", const char[] overwrite, bool once = false);
+
 	// Finds a section in a GameConfig file and makes a memory patch out of the
 	// obtained information
 	//
@@ -104,8 +120,8 @@ methodmap MemoryPatch < Handle
 	// @return              True if check passes, false if not
 	public native bool Validate();
 
-	// Returns whether or not a patch is active
-	public native bool IsActive();
+	// Returns whether or not a patch is one-time
+	public native bool IsOneTime();
 
 	// Enables a patch
 	//
@@ -113,6 +129,7 @@ methodmap MemoryPatch < Handle
 	//       key specified
 	//
 	// @return              True on success, false otherwise
+	// @error               No bytes to replace
 	public native bool Enable();
 
 	// Disables a patch
@@ -195,13 +212,12 @@ stock static int GetNumberTypeByteCount(NumberType size)
  * changed after creation.
  *
  * @param size              The number of entries the block can hold
- * @param stored            If true, the block will be owned by the extension and will be
- *                          freed once its handle will get deleted or the extension will
- *                          be unloaded. Otherwise, it will still remain until the server
- *                          is closed
+ * @param keep              If true, the block will still remain until the server is
+ *                          closed. Otherwise, it will be freed when either its
+ *                          handle is deleted or the extension is unloaded
  * @return                  A handle to the memory block or null on failure
  */
-native MemoryBlock CreateMemoryBlock(int size, bool stored = true);
+native MemoryBlock CreateMemoryBlock(int size, bool keep = false);
 
 /**
  * Retrieves up to 4 bytes from a block
@@ -217,9 +233,7 @@ stock int GetMemoryBlockData(Handle block, int index, NumberType size)
 {
 	int blocksize = GetMemoryBlockSize(block);
 	if (index < 0 || index + GetNumberTypeByteCount(size) > blocksize)
-	{
 		ThrowError("Invalid index %d (count: %d)", index, blocksize);
-	}
 	
 	return LoadFromAddress(GetMemoryBlockAddress(block) + view_as<Address>(index), size);
 }
@@ -237,9 +251,7 @@ stock void SetMemoryBlockData(Handle block, int index, any value, NumberType siz
 {
 	int blocksize = GetMemoryBlockSize(block);
 	if (index < 0 || index + GetNumberTypeByteCount(size) > blocksize)
-	{
 		ThrowError("Invalid index %d (count: %d)", index, blocksize);
-	}
 	
 	StoreToAddress(GetMemoryBlockAddress(block) + view_as<Address>(index), value, size);
 }
@@ -263,6 +275,25 @@ native int GetMemoryBlockSize(Handle block);
 native Address GetMemoryBlockAddress(Handle block);
 
 /**
+ * Creates a patch
+ *
+ * @param addr              Address to a memory location
+ * @param match             Optional binary data to use for checking if the byte(s)
+ *                          is/are the same in the exact order with the one(s) given
+ * @param preserve          Optional binary data to use for conserving bytes during
+ *                          the overwriting process
+ * @param overwrite         Binary data to use for replacing bytes
+ * @param once              If true, the replaced byte(s) will not be reverted
+ *                          to the original one(s) unless the server is shut down.
+ *                          Otherwise, everything within the address will go back
+ *                          to the way it was before after the patch handle is
+ *                          deleted or the extension is unloaded
+ * @return                  A handle to the memory patch or null on failure
+ * @error                   Invalid address
+ */
+native MemoryPatch CreateMemoryPatch(Address addr, const char[] match = "", const char[] preserve = "", const char[] overwrite, bool once = false);
+
+/**
  * Finds a section in a GameConfig file and makes a memory patch out of the
  * obtained information
  *
@@ -283,13 +314,13 @@ native MemoryPatch CreateMemoryPatchFromConf(Handle gameconf, const char[] name)
 native bool ValidateMemoryPatch(Handle patch);
 
 /**
- * Returns whether or not a patch is active
+ * Returns whether or not a patch is one-time
  *
  * @param patch             Patch Handle
- * @return                  True if active patch, false if not
+ * @return                  True if one-time patch, false if not
  * @error                   Invalid Handle
  */
-native bool IsMemoryPatchActive(Handle patch);
+native bool IsOneTimeMemoryPatch(Handle patch);
 
 /**
  * Enables a patch
@@ -299,7 +330,7 @@ native bool IsMemoryPatchActive(Handle patch);
  *
  * @param patch             Patch Handle
  * @return                  True on success, false otherwise
- * @error                   Invalid Handle
+ * @error                   Invalid Handle or no bytes to replace
  */
 native bool EnableMemoryPatch(Handle patch);
 
@@ -416,9 +447,10 @@ public void __ext_srcscrmbl_SetNTVOptional()
 	MarkNativeAsOptional("CreateMemoryBlock");
 	MarkNativeAsOptional("GetMemoryBlockSize");
 	MarkNativeAsOptional("GetMemoryBlockAddress");
+	MarkNativeAsOptional("CreateMemoryPatch");
 	MarkNativeAsOptional("CreateMemoryPatchFromConf");
 	MarkNativeAsOptional("ValidateMemoryPatch");
-	MarkNativeAsOptional("IsMemoryPatchActive");
+	MarkNativeAsOptional("IsOneTimeMemoryPatch");
 	MarkNativeAsOptional("EnableMemoryPatch");
 	MarkNativeAsOptional("DisableMemoryPatch");
 	MarkNativeAsOptional("GetMemoryPatchSize");
@@ -433,9 +465,10 @@ public void __ext_srcscrmbl_SetNTVOptional()
 	MarkNativeAsOptional("MemoryBlock.MemoryBlock");
 	MarkNativeAsOptional("MemoryBlock.Size.get");
 	MarkNativeAsOptional("MemoryBlock.Address.get");
+	MarkNativeAsOptional("MemoryPatch.MemoryPatch");
 	MarkNativeAsOptional("MemoryPatch.FromConf");
 	MarkNativeAsOptional("MemoryPatch.Validate");
-	MarkNativeAsOptional("MemoryPatch.IsActive");
+	MarkNativeAsOptional("MemoryPatch.IsOneTime");
 	MarkNativeAsOptional("MemoryPatch.Enable");
 	MarkNativeAsOptional("MemoryPatch.Disable");
 	MarkNativeAsOptional("MemoryPatch.GetSize");
