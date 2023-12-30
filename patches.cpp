@@ -38,7 +38,7 @@
 
 #define PSTATE_GAMEDEFS_PATCHES			1
 #define PSTATE_GAMEDEFS_PATCHES_PATCH		2
-#define PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE	3
+#define PSTATE_GAMEDEFS_PATCHES_PATCH_MATCH 	3
 
 #ifdef PLATFORM_X64
 #define PLATFORM_ARCH_SUFFIX			"64"
@@ -70,37 +70,36 @@ void PatchGameConfig::ReadSMC_ParseStart() {
 
 SMCResult PatchGameConfig::ReadSMC_NewSection(const SMCStates *states, const char *name)
 {
-    if( m_IgnoreLevel ) {
+    if( ( m_IgnoreLevel ) || ( !*name ) ) {
         ++m_IgnoreLevel;
         return SMCResult_Continue;
     }
 
     if( m_ParseState == PSTATE_GAMEDEFS_PATCHES ) {
         m_Patch = name;
-        if( !m_Patch.empty() ) {
-            StringHashMap< PatchConf >::Result r = m_Patches.find(name);
-            if( r.found() ) {
-                PatchConf &patConf = r->value;
 
-                m_PatchSignature = std::move( patConf.signatureName );
-                m_PatchOffset = patConf.offset;
-                m_PatchMatch = std::move( patConf.match );
-                m_PatchPreserve = std::move( patConf.preserve );
-                m_PatchOverwrite = std::move( patConf.overwrite );
-                m_PatchOneTime = patConf.onetime;
-            }
+        StringHashMap< PatchConf >::Result r = m_Patches.find(name);
+        if( r.found() ) {
+            PatchConf &patConf = r->value;
+
+            m_PatchSignature = std::move( patConf.signatureName );
+            m_PatchOffset = patConf.offset;
+            m_PatchMatch = std::move( patConf.match );
+            m_PatchPreserve = std::move( patConf.preserve );
+            m_PatchOverwrite = std::move( patConf.overwrite );
+            m_PatchOneTime = patConf.onetime;
         }
 
         m_ParseState = PSTATE_GAMEDEFS_PATCHES_PATCH;
     } else if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH ) {
         if( DoesPlatformMatch( name ) ) {
-            m_ParseState = PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE;
+            m_ParseState = PSTATE_GAMEDEFS_PATCHES_PATCH_MATCH;
             return SMCResult_Continue;
         }
 
         if( strcmp( name, "linux" ) && strcmp( name, "windows" ) && strcmp( name, "mac" ) &&
             strcmp( name, "linux64") && strcmp( name, "windows64" ) && strcmp( name, "mac64" ) ) {
-            smutils->LogError(myself, "Error while parsing Patches section for \"%s\":", m_Patch.c_str());
+            smutils->LogError(myself, "Error while parsing Patch section for \"%s\":", m_Patch.c_str());
             smutils->LogError(myself, "Unrecognized platform \"%s\"", name);
         }
 
@@ -113,7 +112,8 @@ SMCResult PatchGameConfig::ReadSMC_NewSection(const SMCStates *states, const cha
 
 SMCResult PatchGameConfig::ReadSMC_KeyValue(const SMCStates *states, const char *key, const char *value)
 {
-    if( ( m_IgnoreLevel ) || ( ( m_ParseState != PSTATE_GAMEDEFS_PATCHES_PATCH ) && ( m_ParseState != PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE ) ) ) {
+    if( ( m_IgnoreLevel ) || ( ( m_ParseState != PSTATE_GAMEDEFS_PATCHES_PATCH ) && ( m_ParseState != PSTATE_GAMEDEFS_PATCHES_PATCH_MATCH ) ) || ( !*key ) ||
+        ( !*value ) ) {
         return SMCResult_Continue;
     }
 
@@ -146,12 +146,8 @@ SMCResult PatchGameConfig::ReadSMC_LeavingSection(const SMCStates *states)
     }
 
     if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH ) {
-        if( ( !m_Patch.empty() ) && ( !m_PatchSignature.empty() ) ) {
-            PatchConf patConf( std::move( m_PatchSignature ), m_PatchOffset, std::move( m_PatchMatch ), std::move( m_PatchPreserve ), std::move( m_PatchOverwrite ), m_PatchOneTime );
-            m_Patches.replace(m_Patch.c_str(), patConf);
-
-            m_PatchSignature.clear();
-        }
+        PatchConf patConf( std::move( m_PatchSignature ), m_PatchOffset, std::move( m_PatchMatch ), std::move( m_PatchPreserve ), std::move( m_PatchOverwrite ), m_PatchOneTime );
+        m_Patches.replace(m_Patch.c_str(), patConf);
 
         if( m_PatchOneTime )
             m_PatchOneTime = false;
@@ -160,9 +156,10 @@ SMCResult PatchGameConfig::ReadSMC_LeavingSection(const SMCStates *states)
         m_PatchMatch.clear();
         if( m_PatchOffset )
             m_PatchOffset = 0;
+        m_PatchSignature.clear();
 
         m_ParseState = PSTATE_GAMEDEFS_PATCHES;
-    } else if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH_REPLACE ) {
+    } else if( m_ParseState == PSTATE_GAMEDEFS_PATCHES_PATCH_MATCH ) {
         m_ParseState = PSTATE_GAMEDEFS_PATCHES_PATCH;
     }
     return SMCResult_Continue;

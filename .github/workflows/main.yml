@@ -71,9 +71,9 @@ jobs:
         with:
           path: Source-Scramble
       - name: Sort out Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Put Python plug-in(s) in place
         run: |
           python -m pip install --upgrade pip wheel
@@ -117,7 +117,7 @@ jobs:
           python ../configure.py --enable-optimize --targets=${{ matrix.sptd_arch }} --sdks=none --mms-path="${{ github.workspace }}/metamod-${{ matrix.meta_version }}" --sm-path="${{ github.workspace }}/sourcemod-${{ matrix.sm_version }}"
           ambuild
       - name: Catalog all compiled files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: srcscramble-sm${{ matrix.sm_version }}-${{ matrix.os_short }}-${{ env.GITHUB_SHA_SHORT }}
           path: Source-Scramble/build/package

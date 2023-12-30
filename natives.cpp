@@ -168,8 +168,10 @@ cell_t CreateMemoryPatchFromConf(IPluginContext* pContext, const cell_t* params)
     const PatchGameConfig::PatchConf &patConf = r->value;
 
     void* addr;
-    if( !gc->GetMemSig(patConf.signatureName.c_str(), reinterpret_cast< void** >( &addr )) || addr == nullptr )
-        return pContext->ThrowNativeError("Unable to find \"%s\" signature from \"%s\"", patConf.signatureName.c_str(), key);
+    if( patConf.signatureName.empty() )
+        return pContext->ThrowNativeError("\"%s\" has no signature", key);
+    else if( !gc->GetMemSig(patConf.signatureName.c_str(), reinterpret_cast< void** >( &addr )) || addr == nullptr )
+        return pContext->ThrowNativeError("Sigscan for \"%s\" from \"%s\" failed", patConf.signatureName.c_str(), key);
 
     MemoryPatch* pMemoryPatch = new MemoryPatch( addr, patConf );
     if( pMemoryPatch == nullptr )
@@ -240,7 +242,7 @@ cell_t EnableMemoryPatch(IPluginContext* pContext, const cell_t* params)
     } else if( reinterpret_cast< uintptr_t >( pMemoryPatch->pAddr ) < 0x10000 ) {
         return pContext->ThrowNativeError("Invalid address 0x%x is pointing to reserved memory", pMemoryPatch->pAddr);
     } else if( !pMemoryPatch->overwrite.size() ) {
-        return pContext->ThrowNativeError("There are no bytes provided to replace the ones in the address");
+        return pContext->ThrowNativeError("Not even a single byte is provided for patching");
     }
 
     bool ret = pMemoryPatch->Enable();
@@ -296,7 +298,6 @@ cell_t GetMemoryPatchSize(IPluginContext* pContext, const cell_t* params)
     } else if( !strcmp( key, "original" ) ) {
         return static_cast< cell_t >( pMemoryPatch->original.size() );
     }
-
     return pContext->ThrowNativeError("Invalid patch data type \"%s\"", key);
 }
 
@@ -354,47 +355,40 @@ cell_t GetMemoryPatchData(IPluginContext* pContext, const cell_t* params)
           != HandleError_None )
         return pContext->ThrowNativeError("Invalid Handle %x (error %d)", hndl, err);
 
+    char* key;
+    pContext->LocalToString(params[2], &key);
+
+    size_t sz;
+    if( !strcmp( key, "match" ) ) {
+        sz = pMemoryPatch->match.size();
+    } else if( !strcmp( key, "preserve" ) ) {
+        sz = pMemoryPatch->preserve.size();
+    } else if( !strcmp( key, "overwrite" ) ) {
+        sz = pMemoryPatch->overwrite.size();
+    } else if( !strcmp( key, "original" ) ) {
+        sz = pMemoryPatch->original.size();
+    } else {
+        return pContext->ThrowNativeError("Invalid patch data type \"%s\"", key);
+    }
+
     cell_t idx = params[3];
     if( idx < 0 )
         return pContext->ThrowNativeError("Invalid patch data index %d", idx);
 
-    char* key;
-    pContext->LocalToString(params[2], &key);
-    if( !strcmp( key, "match" ) ) {
-        if( !pMemoryPatch->match.size() ) {
-            return pContext->ThrowNativeError("No data in \"match\" is found");
-        } else if( idx >= pMemoryPatch->match.size() ) {
-            return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, pMemoryPatch->match.size());
-        }
-
-        return static_cast< cell_t >( pMemoryPatch->match[idx] );
-    } else if( !strcmp( key, "preserve" ) ) {
-        if( !pMemoryPatch->preserve.size() ) {
-            return pContext->ThrowNativeError("No data in \"preserve\" is found");
-        } else if( idx >= pMemoryPatch->preserve.size() ) {
-            return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, pMemoryPatch->preserve.size());
-        }
-
-        return static_cast< cell_t >( pMemoryPatch->preserve[idx] );
-    } else if( !strcmp( key, "overwrite" ) ) {
-        if( !pMemoryPatch->overwrite.size() ) {
-            return pContext->ThrowNativeError("No data in \"overwrite\" is found");
-        } else if( idx >= pMemoryPatch->overwrite.size() ) {
-            return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, pMemoryPatch->overwrite.size());
-        }
-
-        return static_cast< cell_t >( pMemoryPatch->overwrite[idx] );
-    } else if( !strcmp( key, "original" ) ) {
-        if( !pMemoryPatch->original.size() ) {
-            return pContext->ThrowNativeError("No data in \"original\" is found");
-        } else if( idx >= pMemoryPatch->original.size() ) {
-            return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, pMemoryPatch->original.size());
-        }
-
-        return static_cast< cell_t >( pMemoryPatch->original[idx] );
+    if( !sz ) {
+        return pContext->ThrowNativeError("No data in \"%s\" is found", key);
+    } else if( idx >= sz ) {
+        return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, sz);
     }
 
-    return pContext->ThrowNativeError("Invalid patch data type \"%s\"", key);
+    if( !strcmp( key, "match" ) ) {
+        return static_cast< cell_t >( pMemoryPatch->match[idx] );
+    } else if( !strcmp( key, "preserve" ) ) {
+        return static_cast< cell_t >( pMemoryPatch->preserve[idx] );
+    } else if( !strcmp( key, "overwrite" ) ) {
+        return static_cast< cell_t >( pMemoryPatch->overwrite[idx] );
+    }
+    return static_cast< cell_t >( pMemoryPatch->original[idx] );
 }
 
 cell_t SetMemoryPatchData(IPluginContext* pContext, const cell_t* params)
@@ -413,9 +407,31 @@ cell_t SetMemoryPatchData(IPluginContext* pContext, const cell_t* params)
           != HandleError_None )
         return pContext->ThrowNativeError("Invalid Handle %x (error %d)", hndl, err);
 
+    char* key;
+    pContext->LocalToString(params[2], &key);
+
+    size_t sz;
+    if( !strcmp( key, "match" ) ) {
+        sz = pMemoryPatch->match.size();
+    } else if( !strcmp( key, "preserve" ) ) {
+        sz = pMemoryPatch->preserve.size();
+    } else if( !strcmp( key, "overwrite" ) ) {
+        sz = pMemoryPatch->overwrite.size();
+    } else if( !strcmp( key, "original" ) ) {
+        sz = pMemoryPatch->original.size();
+    } else {
+        return pContext->ThrowNativeError("Invalid patch data type \"%s\"", key);
+    }
+
     cell_t idx = params[3];
     if( idx < 0 )
         return pContext->ThrowNativeError("Invalid patch data index %d", idx);
+
+    if( !sz ) {
+        return pContext->ThrowNativeError("No data in \"%s\" is found", key);
+    } else if( idx >= sz ) {
+        return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, sz);
+    }
 
     cell_t val = params[4];
     if( val < -255 || val > 255 )
@@ -424,59 +440,27 @@ cell_t SetMemoryPatchData(IPluginContext* pContext, const cell_t* params)
     if( val <= -129 )
         val *= ( -1 );
 
-    char* key;
-    pContext->LocalToString(params[2], &key);
-    if( !strcmp( key, "match" ) ) {
-        if( !pMemoryPatch->match.size() ) {
-            return pContext->ThrowNativeError("No data in \"match\" is found");
-        } else if( idx >= pMemoryPatch->match.size() ) {
-            return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, pMemoryPatch->match.size());
-        }
-
-        if( val >= 128 )
+    if( val >= 128 )
+        if( !strcmp( key, "match" ) ) {
             pMemoryPatch->match[idx] = val;
-        else
-            pMemoryPatch->match[idx] = static_cast< uint8_t >( val );
-        return 0;
-    } else if( !strcmp( key, "preserve" ) ) {
-        if( !pMemoryPatch->preserve.size() ) {
-            return pContext->ThrowNativeError("No data in \"preserve\" is found");
-        } else if( idx >= pMemoryPatch->preserve.size() ) {
-            return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, pMemoryPatch->preserve.size());
-        }
-
-        if( val >= 128 )
+        } else if( !strcmp( key, "preserve" ) ) {
             pMemoryPatch->preserve[idx] = val;
-        else
-            pMemoryPatch->preserve[idx] = static_cast< uint8_t >( val );
-        return 0;
-    } else if( !strcmp( key, "overwrite" ) ) {
-        if( !pMemoryPatch->overwrite.size() ) {
-            return pContext->ThrowNativeError("No data in \"overwrite\" is found");
-        } else if( idx >= pMemoryPatch->overwrite.size() ) {
-            return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, pMemoryPatch->overwrite.size());
-        }
-
-        if( val >= 128 )
+        } else if( !strcmp( key, "overwrite" ) ) {
             pMemoryPatch->overwrite[idx] = val;
-        else
-            pMemoryPatch->overwrite[idx] = static_cast< uint8_t >( val );
-        return 0;
-    } else if( !strcmp( key, "original" ) ) {
-        if( !pMemoryPatch->original.size() ) {
-            return pContext->ThrowNativeError("No data in \"original\" is found");
-        } else if( idx >= pMemoryPatch->original.size() ) {
-            return pContext->ThrowNativeError("Invalid index %d (count: %d)", idx, pMemoryPatch->original.size());
-        }
-
-        if( val >= 128 )
+        } else {
             pMemoryPatch->original[idx] = val;
-        else
+        }
+    else
+        if( !strcmp( key, "match" ) ) {
+            pMemoryPatch->match[idx] = static_cast< uint8_t >( val );
+        } else if( !strcmp( key, "preserve" ) ) {
+            pMemoryPatch->preserve[idx] = static_cast< uint8_t >( val );
+        } else if( !strcmp( key, "overwrite" ) ) {
+            pMemoryPatch->overwrite[idx] = static_cast< uint8_t >( val );
+        } else {
             pMemoryPatch->original[idx] = static_cast< uint8_t >( val );
-        return 0;
-    }
-
-    return pContext->ThrowNativeError("Invalid patch data type \"%s\"", key);
+        }
+    return 0;
 }
 
 cell_t GetMemoryPatchAddress(IPluginContext* pContext, const cell_t* params)
